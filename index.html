@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sakila Videoclub</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</head>
+<body x-data="app()" x-init="init()" x-cloak>
+
+<header class="bar">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
+    <h1 class="text-xl font-bold">Sakila Videoclub</h1>
+    <nav class="flex gap-2 ml-auto text-sm">
+      <button class="btn2" :class="view==='catalogo' && 'on'" @click="view='catalogo'">Catalogo</button>
+      <button class="btn2" :class="view==='historial' && 'on'" @click="view='historial'">Alquileres</button>
+      <button class="btn2" :class="view==='equipo' && 'on'" @click="view='equipo'">Equipo</button>
+      <button class="btn2" :class="view==='carrito' && 'on'" @click="view='carrito'">Carrito (<span x-text="cart.length"></span>)</button>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 py-6">
+
+  <section x-show="view==='catalogo'">
+    <div class="flex flex-wrap gap-2 mb-5">
+      <input class="inp flex-1 min-w-[200px]" placeholder="Buscar titulo o actor" x-model="q">
+      <select class="inp" x-model="cat">
+        <option>Todas</option>
+        <template x-for="c in cats"><option x-text="c"></option></template>
+      </select>
+      <select class="inp" x-model="sort">
+        <option value="title">A-Z</option>
+        <option value="rate">Precio</option>
+        <option value="len">Duracion</option>
+      </select>
+    </div>
+    <p x-show="loading">Cargando...</p>
+    <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <template x-for="f in filtered" :key="f.id">
+        <article class="card film" @click="sel=f">
+          <div class="poster" :style="poster(f)" x-text="f.title[0]"></div>
+          <div class="p-3">
+            <h3 class="font-bold text-sm" x-text="f.title"></h3>
+            <p class="text-xs muted" x-text="f.cat + ' | ' + f.rating"></p>
+            <div class="flex justify-between mt-2 text-sm">
+              <b x-text="'$' + f.rate.toFixed(2)"></b>
+              <span class="muted" x-text="f.len + ' min'"></span>
+            </div>
+          </div>
+        </article>
+      </template>
+    </div>
+    <p x-show="!loading && !filtered.length" class="muted">Sin resultados.</p>
+  </section>
+
+  <section x-show="view==='carrito'" class="max-w-xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">Carrito</h2>
+    <p x-show="!cart.length" class="muted">No hay peliculas en el carrito.</p>
+    <template x-for="f in cart" :key="f.id">
+      <div class="card p-3 mb-2 flex items-center gap-3">
+        <div class="flex-1">
+          <b x-text="f.title"></b>
+          <div class="text-xs muted" x-text="'Devolucion en ' + f.days + ' dias'"></div>
+        </div>
+        <b x-text="'$' + f.rate.toFixed(2)"></b>
+        <button class="btn2" @click="cart=cart.filter(c=>c.id!==f.id)">Quitar</button>
+      </div>
+    </template>
+    <div x-show="cart.length" class="card p-4 mt-4">
+      <select class="inp w-full mb-3" x-model="store">
+        <option value="1">Sucursal 1</option>
+        <option value="2">Sucursal 2</option>
+      </select>
+      <input class="inp w-full mb-3" placeholder="Nombre del cliente" x-model="customer">
+      <div class="flex justify-between mb-3"><span>Total</span><b x-text="'$' + total.toFixed(2)"></b></div>
+      <button class="btn w-full" @click="checkout()">Confirmar alquiler</button>
+    </div>
+  </section>
+
+  <section x-show="view==='historial'" class="max-w-xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">Alquileres</h2>
+    <p x-show="!rentals.length" class="muted">Todavia no hay alquileres.</p>
+    <template x-for="r in rentals" :key="r.id">
+      <div class="card p-3 mb-2 flex justify-between">
+        <div>
+          <b x-text="r.title"></b>
+          <div class="text-xs muted" x-text="r.customer + ' | Sucursal ' + r.store"></div>
+        </div>
+        <div class="text-right text-xs">
+          <div x-text="'Devolver: ' + r.due"></div>
+          <b x-text="'$' + r.rate.toFixed(2)"></b>
+        </div>
+      </div>
+    </template>
+    <button x-show="rentals.length" class="btn2 mt-3 text-sm" @click="rentals=[];save()">Limpiar historial</button>
+  </section>
+
+  <section x-show="view==='equipo'">
+    <h2 class="text-2xl font-bold mb-4">Equipo</h2>
+    <div class="grid md:grid-cols-3 gap-4">
+      <template x-for="m in team" :key="m.n">
+        <div class="card p-6 text-center">
+          <div class="avatar" x-text="m.n.split(' ').map(w=>w[0]).join('')"></div>
+          <h3 class="font-bold mt-3" x-text="m.n"></h3>
+          <p class="text-sm muted" x-text="m.r"></p>
+        </div>
+      </template>
+    </div>
+  </section>
+
+</main>
+
+<div x-show="sel" class="overlay" @click.self="sel=null">
+  <div class="card max-w-md w-full overflow-hidden">
+    <template x-if="sel">
+      <div>
+        <div class="poster big" :style="poster(sel)" x-text="sel.title[0]"></div>
+        <div class="p-5">
+          <h3 class="text-xl font-bold" x-text="sel.title"></h3>
+          <p class="text-xs muted my-2" x-text="sel.cat + ' | ' + sel.rating + ' | ' + sel.year + ' | ' + sel.len + ' min'"></p>
+          <p class="text-sm mb-2" x-text="sel.desc"></p>
+          <p class="text-xs muted mb-2" x-text="'Reparto: ' + sel.actors.join(', ')"></p>
+          <p class="text-xs mb-3" x-text="'Stock: Sucursal 1 (' + sel.s1 + '), Sucursal 2 (' + sel.s2 + ')'"></p>
+          <div class="flex gap-2 items-center">
+            <b class="text-lg" x-text="'$' + sel.rate.toFixed(2)"></b>
+            <button class="btn ml-auto" @click="add(sel)">Alquilar</button>
+            <button class="btn2" @click="sel=null">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+
+<div x-show="toast" class="toast" x-text="toast"></div>
+
+<footer class="text-center text-xs py-8 muted">Valeria Rodriguez | Jorge Soliz | Wara Tipola</footer>
+
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
