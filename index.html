@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600&family=Work+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script type="module" src="js/main.js"></script>
 </head>
@@ -29,16 +30,12 @@
       <div>
         <h1 id="heroTitle">Club de videos Sakila</h1>
         <p class="lead">Elige un disco, revisa su ficha y llévalo por los días que quieras.</p>
-        <dl class="spec">
-          <div><dt>Formato</dt><dd>Disco</dd></div>
-          <div><dt>Tarifa</dt><dd>Desde Bs 3.50 por día</dd></div>
-          <div><dt>Multa</dt><dd>Bs 2.00 por día de atraso</dd></div>
-        </dl>
       </div>
-      <div class="drive" aria-live="polite">
-        <div class="drive__body"><div class="drive__tray"><div class="drive__slot"></div></div></div>
-        <p class="drive__bubble" id="driveMsg">Inserta un disco para comenzar.</p>
-      </div>
+      <dl class="spec">
+        <div><dt>Formato</dt><dd>Disco</dd></div>
+        <div><dt>Tarifa</dt><dd>Desde Bs 3.50 por día</dd></div>
+        <div><dt>Multa</dt><dd>Bs 2.00 por día de atraso</dd></div>
+      </dl>
     </section>
 
     <section id="catalogo" aria-labelledby="catTitle">
@@ -58,7 +55,15 @@
         </label>
         <p id="resultCount" class="muted" aria-live="polite"></p>
       </form>
-      <ul class="disc-grid" id="discGrid"><li class="empty">Cargando discos…</li></ul>
+      <div class="catalog">
+        <ul class="disc-grid" id="discGrid"><li class="empty">Cargando discos…</li></ul>
+        <aside class="drive" aria-label="Reproductor de discos" aria-live="polite">
+          <div class="drive__body"><div class="drive__tray"><div class="drive__slot"></div></div></div>
+          <div class="drive__bubble" id="driveInfo">
+            <p class="drive__idle">Inserta un disco para comenzar. Pasa el cursor sobre uno y aquí verás su información.</p>
+          </div>
+        </aside>
+      </div>
     </section>
 
     <section id="socio" class="socio" aria-labelledby="socioTitle">

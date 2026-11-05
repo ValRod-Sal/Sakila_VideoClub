@@ -23,17 +23,19 @@
 .badge--late { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
 
 /* ---------- Disco ---------- */
-.disc-item { transform-style: preserve-3d; transition: transform .5s var(--ease); }
-.disc-item:nth-child(4n+1) { transform: rotateX(8deg) rotateY(-8deg); }
-.disc-item:nth-child(4n+2) { transform: rotateX(6deg) rotateY(-3deg) translateY(10px); }
-.disc-item:nth-child(4n+3) { transform: rotateX(5deg) rotateY(4deg) translateY(-4px); }
-.disc-item:nth-child(4n+4) { transform: rotateX(8deg) rotateY(9deg) translateY(8px); }
-.disc-item:hover, .disc-item:focus-within { transform: translateY(-4px); position: relative; z-index: 2; }
+/* Los discos se ven planos. Al pasar el cursor, SOLO el CD (.disc__surface) gira;
+   el título, la marca, los botones y el resto de la tarjeta quedan quietos. */
+.disc-item { max-width: 300px; width: 100%; justify-self: center; }
 
 .disc {
   position: relative; display: block; width: 100%; aspect-ratio: 1;
   border: 0; background: none; border-radius: 50%;
-  filter: drop-shadow(0 16px 18px rgba(0, 0, 0, .4));
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, .35));
+  transition: transform .55s cubic-bezier(.34, 1.56, .64, 1), filter .4s;
+}
+.disc-item:hover .disc, .disc-item:focus-within .disc {
+  transform: scale(1.07);
+  filter: drop-shadow(0 18px 20px rgba(0, 0, 0, .45)) drop-shadow(0 0 14px var(--c1));
 }
 .disc::before { /* brillo fijo */
   content: ''; position: absolute; inset: 0; border-radius: 50%; z-index: 2; pointer-events: none;
@@ -42,40 +44,57 @@
 .disc__surface {
   position: absolute; inset: 0; border-radius: 50%;
   background: conic-gradient(from 20deg, #e9eaee, #ffffff, #aeb4bd, #f3f4f6, #9aa1ab, #ffffff, #cfd3da, #e9eaee);
-  transition: transform .9s var(--ease);
+  animation: disc-spin .9s linear infinite;
+  animation-play-state: paused;          /* quieto hasta que el cursor lo toca */
+}
+.disc__surface::before { /* reflejo iridiscente que gira con el CD */
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255,80,160,.30), rgba(80,200,255,.30), rgba(120,255,160,.26), rgba(255,220,90,.30), rgba(255,80,160,.30));
+  mix-blend-mode: multiply;
 }
 .disc__label {
   position: absolute; inset: 7%; border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, var(--c1), var(--c2) 78%);
+  background:
+    conic-gradient(from 0deg, rgba(255,255,255,.30) 0 7%, transparent 7% 50%, rgba(0,0,0,.18) 50% 57%, transparent 57%),
+    radial-gradient(circle at 30% 25%, var(--c1), var(--c2) 78%);
   box-shadow: inset 0 0 0 2px rgba(255,255,255,.28);
 }
+@keyframes disc-spin { to { transform: rotate(360deg); } }
 .disc__surface::after { /* agujero central */
   content: ''; position: absolute; inset: 39%; border-radius: 50%;
   background: var(--color-bg); box-shadow: 0 0 0 5px #c4c8cf, inset 0 0 8px rgba(0,0,0,.55);
 }
 .disc__title {
   position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); width: 64%; z-index: 1;
-  text-align: center; font-weight: 700; font-size: clamp(.58rem, 1.05vw, .8rem);
+  text-align: center; font-weight: 700; font-size: clamp(.62rem, 1.1vw, .9rem);
   letter-spacing: .06em; text-transform: uppercase; line-height: 1.15;
   color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7);
 }
 .disc__brand { position: absolute; top: 18%; left: 50%; transform: translateX(-50%); z-index: 1; font-size: .55rem; letter-spacing: .35em; color: rgba(255,255,255,.85); }
-.disc-item:hover .disc__surface, .disc-item:focus-within .disc__surface { transform: rotate(40deg); }
+.disc-item:hover .disc__surface, .disc-item:focus-within .disc__surface, .disc--big:hover .disc__surface { animation-play-state: running; }
 
 .disc-meta { margin-top: .8rem; text-align: center; font-size: .8rem; color: var(--color-muted); }
 .disc-actions { display: flex; gap: .4rem; justify-content: center; margin-top: .5rem; flex-wrap: wrap; }
 .btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
 
 /* ---------- Lector de discos (bandeja) ---------- */
-.drive { display: flex; align-items: flex-start; justify-content: center; gap: 1rem; }
-.drive__body { width: 240px; background: #7c828a; border-radius: 4px 4px 0 0; padding: 10px 14px 0; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
-.drive__tray { background: #26262a; padding: 14px 14px 10px; border-bottom: 10px solid #b9bec5; }
-.drive__slot { height: 90px; border-radius: 0 0 90px 90px; background: #000; border: 3px solid #3a3a40; border-top: 0; }
+.drive { position: sticky; top: 5.5rem; display: grid; justify-items: center; gap: 1.2rem; padding-top: 2.5rem; }
+.drive__body { width: min(100%, 380px); background: #7c828a; border-radius: 6px 6px 0 0; padding: 14px 18px 0; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.drive__tray { background: #26262a; padding: 18px 18px 12px; border-bottom: 12px solid #b9bec5; }
+.drive__slot { height: 130px; border-radius: 0 0 130px 130px; background: #000; border: 3px solid #3a3a40; border-top: 0; }
 .drive__bubble {
-  position: relative; align-self: center; max-width: 190px; padding: .4rem .7rem;
-  background: #dfe4ea; color: #15181d; border: 1px solid #4a5360; border-radius: 6px; font-size: .8rem;
+  position: relative; width: min(100%, 420px); padding: 1rem 1.1rem; min-height: 11rem;
+  background: #dfe4ea; color: #15181d; border: 1px solid #4a5360; border-radius: 6px; font-size: .85rem;
 }
-.drive__bubble::before { content: ''; position: absolute; left: -7px; top: 50%; width: 12px; height: 12px; background: #dfe4ea; border-left: 1px solid #4a5360; border-bottom: 1px solid #4a5360; transform: translateY(-50%) rotate(45deg); }
+.drive__bubble::before { content: ''; position: absolute; left: 50%; top: -7px; width: 12px; height: 12px; background: #dfe4ea; border-left: 1px solid #4a5360; border-top: 1px solid #4a5360; transform: translateX(-50%) rotate(45deg); }
+.drive__bubble .badge--R { background: #15181d; color: #dfe4ea; }
+.drive__title { display: block; font-family: var(--font-display); font-size: 1rem; line-height: 1.25; text-transform: uppercase; }
+.drive__meta { margin: .3rem 0 .6rem; color: #4a5360; }
+.drive__syn { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: .7rem; }
+.drive__facts div { display: grid; grid-template-columns: 4.5rem 1fr; gap: .5rem; padding: .3rem 0; border-top: 1px solid #aab3bf; }
+.drive__facts dt { color: #4a5360; }
+.drive__cta { margin-top: .6rem; font-size: .75rem; color: #4a5360; }
+.drive__idle { color: #4a5360; }
 
 /* ---------- Diálogos ---------- */
 dialog { margin: auto; width: min(920px, 94vw); max-height: 92vh; overflow: auto; padding: 0;
@@ -84,7 +103,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .dlg-close { position: absolute; top: 1rem; right: 1rem; z-index: 3; background: var(--color-surface); }
 .detail { display: grid; grid-template-columns: 1fr 1.3fr; gap: 2rem; padding: 2rem; }
 .detail__disc { align-self: start; padding: 1rem; max-width: 340px; width: 100%; margin-inline: auto; }
-.detail__info h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: .3rem 0 .8rem; }
+.detail__info h2 { font-size: clamp(1.3rem, 3vw, 2rem); margin: .3rem 0 .8rem; }
 .specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem 1.5rem; margin: 1.2rem 0; }
 .specs div { border-top: 1px solid var(--color-line); padding-top: .3rem; }
 .specs__wide { grid-column: 1 / -1; }
@@ -124,10 +143,9 @@ th { font-weight: 500; color: var(--color-muted); }
 
 @media (max-width: 760px) {
   .detail { grid-template-columns: 1fr; padding: 1.2rem; }
-  .disc-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 1rem; }
-  .disc-item:nth-child(n) { transform: rotateX(4deg) rotateY(-4deg); }
+  .disc-grid { gap: 2rem 1rem; }
   .cart-item { grid-template-columns: 1fr auto; }
-  .drive { flex-direction: column; align-items: center; }
+  .drive { position: static; order: -1; padding-top: 1.5rem; }
 }
 
 /* ---------- Registro de socio ---------- */

@@ -6,6 +6,7 @@ body {
   transition: background .35s, color .35s;
 }
 h1, h2, h3 { font-family: var(--font-title); font-weight: 400; line-height: 1.1; }
+h1, h2 { font-family: var(--font-display); letter-spacing: .01em; }
 h3 { font-size: 1.35rem; margin-bottom: 1rem; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }

@@ -77,6 +77,29 @@ function renderCatalogo() {
     : '<li class="empty">No hay discos con esos filtros. Prueba con otra categoría o borra la búsqueda.</li>';
 }
 
+/* ============ Reproductor: comentario con la info del disco ============ */
+function driveHtml(p) {
+  const actores = String(p.reparto || '').split(', ').filter(Boolean);
+  const reparto = actores.length
+    ? actores.slice(0, 4).join(', ') + (actores.length > 4 ? ` y ${actores.length - 4} más` : '')
+    : 'Sin reparto registrado';
+  const enCarrito = state.cart.find(i => Number(i.id) === Number(p.pelicula_id));
+  const tuLista = [
+    state.favs.has(Number(p.pelicula_id)) ? 'En tus favoritos' : '',
+    enCarrito ? `En el carrito (${enCarrito.dias} ${enCarrito.dias === 1 ? 'día' : 'días'})` : ''
+  ].filter(Boolean).join(' · ');
+  return `
+    <strong class="drive__title">${esc(p.titulo)}</strong>
+    <p class="drive__meta">${esc(p.categoria)} · ${esc(p.anio)} · ${esc(p.duracion)} min · <span class="badge badge--${esc(p.clasificacion)}">${esc(p.clasificacion)}</span></p>
+    <p class="drive__syn">${esc(p.sinopsis)}</p>
+    <dl class="drive__facts">
+      <div><dt>Tarifa</dt><dd>${bs(p.tarifa_dia)} por día</dd></div>
+      <div><dt>Reparto</dt><dd>${esc(reparto)}</dd></div>
+      ${tuLista ? `<div><dt>Tu lista</dt><dd>${esc(tuLista)}</dd></div>` : ''}
+    </dl>
+    <p class="drive__cta">Haz clic en el disco para ver la ficha completa.</p>`;
+}
+
 /* ============ Ficha de película (RF-02) ============ */
 async function openDetail(id) {
   let p;
@@ -224,9 +247,7 @@ function bindEvents() {
   const hint = e => {
     const li = e.target.closest('.disc-item');
     const p = li && findPeli(li.dataset.id);
-    $('#driveMsg').textContent = p
-      ? `${p.titulo} · ${p.clasificacion} · ${p.duracion} min`
-      : 'Inserta un disco para comenzar.';
+    if (p) $('#driveInfo').innerHTML = driveHtml(p);   // se queda visible hasta elegir otro disco
   };
   grid.addEventListener('mouseover', hint);
   grid.addEventListener('focusin', hint);

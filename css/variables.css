@@ -1,6 +1,7 @@
 /* Tokens de diseño: escala de grises + un azul desaturado. */
 :root {
   --font-title: 'Bodoni Moda', 'Playfair Display', Georgia, serif;
+  --font-display: 'Zen Dots', 'Bodoni Moda', Georgia, sans-serif;
   --font-main: 'Work Sans', Arial, sans-serif;
   --radius: 4px;
   --ease: cubic-bezier(.2, .8, .2, 1);
