@@ -1,0 +1,13 @@
+{
+  "name": "club-sakila",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Club de videos Sakila: catálogo de discos, carrito y cuenta de socio (SIS-214, Proyecto 1)",
+  "license": "MIT",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server/server.js",
+    "dev": "node --watch --disable-warning=ExperimentalWarning server/server.js",
+    "db:reset": "node --disable-warning=ExperimentalWarning server/reset-db.js"
+  }
+}

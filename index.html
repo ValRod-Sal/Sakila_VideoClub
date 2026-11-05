@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Club Sakila · Videoclub de discos</title>
+  <meta name="description" content="Explora y alquila películas del catálogo Sakila. Cada película es un disco.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600&family=Work+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body id="top">
+  <header class="site-header">
+    <a class="brand" href="#top">Club Sakila</a>
+    <nav aria-label="Principal">
+      <a href="#catalogo">Catálogo</a>
+      <a href="#socio">Mi cuenta</a>
+    </nav>
+    <div class="header-actions">
+      <button class="btn btn--ghost" id="themeBtn" type="button" aria-label="Cambiar tema claro u oscuro">Claro</button>
+      <button class="btn" id="cartBtn" type="button" aria-label="Abrir carrito">Carrito <span id="cartCount" class="count">0</span></button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" aria-labelledby="heroTitle">
+      <div>
+        <h1 id="heroTitle">Club de videos Sakila</h1>
+        <p class="lead">Elige un disco, revisa su ficha y llévalo por los días que quieras.</p>
+        <dl class="spec">
+          <div><dt>Formato</dt><dd>Disco</dd></div>
+          <div><dt>Tarifa</dt><dd>Desde Bs 3.50 por día</dd></div>
+          <div><dt>Multa</dt><dd>Bs 2.00 por día de atraso</dd></div>
+        </dl>
+      </div>
+      <div class="drive" aria-live="polite">
+        <div class="drive__body"><div class="drive__tray"><div class="drive__slot"></div></div></div>
+        <p class="drive__bubble" id="driveMsg">Inserta un disco para comenzar.</p>
+      </div>
+    </section>
+
+    <section id="catalogo" aria-labelledby="catTitle">
+      <h2 id="catTitle" class="sr-only">Catálogo de películas</h2>
+      <form class="filters" role="search" onsubmit="return false">
+        <label class="field field--grow">Buscar por título o reparto
+          <input type="search" id="q" placeholder="Ej.: Alien, Penelope…" autocomplete="off">
+        </label>
+        <label class="field">Categoría
+          <select id="fCat"><option value="">Todas</option></select>
+        </label>
+        <label class="field">Clasificación
+          <select id="fCla">
+            <option value="">Todas</option>
+            <option>G</option><option>PG</option><option>PG-13</option><option>R</option>
+          </select>
+        </label>
+        <p id="resultCount" class="muted" aria-live="polite"></p>
+      </form>
+      <ul class="disc-grid" id="discGrid"><li class="empty">Cargando discos…</li></ul>
+    </section>
+
+    <section id="socio" class="socio" aria-labelledby="socioTitle">
+      <div class="socio__head">
+        <h2 id="socioTitle">Mi cuenta de socio</h2>
+        <label class="field">Socio
+          <select id="socioSel"></select>
+        </label>
+      </div>
+      <details class="new-socio">
+        <summary>Registrar nuevo socio</summary>
+        <form id="socioForm">
+          <label class="field">Nombre completo
+            <input name="nombre" required minlength="3" maxlength="80" autocomplete="name"
+                   pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]{3,80}" title="Solo letras y espacios, mínimo 3 caracteres">
+          </label>
+          <label class="field">Correo
+            <input name="email" type="email" required maxlength="100" autocomplete="email" placeholder="nombre@ucb.edu.bo">
+          </label>
+          <button class="btn" type="submit">Registrar socio</button>
+        </form>
+      </details>
+      <div class="stats" id="stats"></div>
+      <div class="socio-grid">
+        <article>
+          <h3>Historial de alquileres</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Película</th><th>Alquilado</th><th>Límite</th><th>Estado</th><th>Multa</th><th>Total</th><th><span class="sr-only">Acción</span></th></tr></thead>
+              <tbody id="rentalsBody"></tbody>
+            </table>
+          </div>
+        </article>
+        <article>
+          <h3>Lista de favoritos</h3>
+          <ul class="wishlist" id="wishlist"></ul>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Club Sakila · Tecnologías Web I (SIS-214) · Universidad Católica Boliviana “San Pablo”</p>
+  </footer>
+
+  <dialog id="detailDlg" aria-labelledby="dTitle">
+    <form method="dialog"><button class="icon-btn dlg-close" aria-label="Cerrar ficha">✕</button></form>
+    <div class="detail">
+      <div class="detail__disc">
+        <div class="disc disc--big" id="dDisc">
+          <span class="disc__surface"><span class="disc__label"></span></span>
+          <span class="disc__title" id="dDiscTitle"></span>
+          <span class="disc__brand">SAKILA</span>
+        </div>
+      </div>
+      <div class="detail__info">
+        <p class="muted" id="dMeta"></p>
+        <h2 id="dTitle"></h2>
+        <p id="dSyn"></p>
+        <dl class="specs">
+          <div><dt>Año</dt><dd id="dYear"></dd></div>
+          <div><dt>Duración</dt><dd id="dDur"></dd></div>
+          <div><dt>Clasificación</dt><dd id="dCla"></dd></div>
+          <div><dt>Tarifa</dt><dd id="dTar"></dd></div>
+          <div class="specs__wide"><dt>Reparto</dt><dd id="dCast"></dd></div>
+        </dl>
+        <div class="trailer" id="dTrailer"></div>
+        <div class="detail__buy">
+          <label class="field">Días de préstamo
+            <input type="number" id="dDias" min="1" max="14" value="3">
+          </label>
+          <button class="btn" id="dAdd" type="button">Añadir al carrito</button>
+          <button class="btn btn--ghost" id="dFav" type="button" aria-pressed="false">Favorito</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="cartDlg" aria-labelledby="cartTitle">
+    <div class="cart">
+      <header class="cart__head">
+        <h2 id="cartTitle">Tu carrito</h2>
+        <form method="dialog"><button class="icon-btn" aria-label="Cerrar carrito">✕</button></form>
+      </header>
+      <ul id="cartList" class="cart__list"></ul>
+      <p class="cart__total">Total <strong id="cartTotal">Bs 0.00</strong></p>
+      <p class="muted" id="cartSocio"></p>
+      <div class="cart__actions">
+        <button class="btn btn--ghost" id="cartClear" type="button">Vaciar carrito</button>
+        <button class="btn" id="cartPay" type="button">Confirmar alquiler</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

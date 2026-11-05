@@ -1,0 +1,35 @@
+/* Tokens de diseño: escala de grises + un azul desaturado. */
+:root {
+  --font-title: 'Bodoni Moda', 'Playfair Display', Georgia, serif;
+  --font-main: 'Work Sans', Arial, sans-serif;
+  --radius: 4px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+/* Claro: papel de cartelera */
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #eceef0;
+  --color-surface: #f8f9fa;
+  --color-text: #15181d;
+  --color-muted: #646c76;
+  --color-line: #15181d;
+  --color-primary: #15181d;
+  --color-on-primary: #eceef0;
+  --color-secondary: #4f6a8a;   /* azul desaturado */
+  --color-accent: #4f6a8a;
+  --color-on-accent: #f8f9fa;
+}
+/* Oscuro */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0e1013;
+  --color-surface: #161a1f;
+  --color-text: #e6e9ed;
+  --color-muted: #8e96a1;
+  --color-line: #e6e9ed;
+  --color-primary: #e6e9ed;
+  --color-on-primary: #0e1013;
+  --color-secondary: #8fa6c1;   /* azul desaturado */
+  --color-accent: #8fa6c1;
+  --color-on-accent: #0e1013;
+}

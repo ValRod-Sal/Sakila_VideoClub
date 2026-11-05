@@ -1,0 +1,20 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+body {
+  background: var(--color-bg); color: var(--color-text);
+  font-family: var(--font-main); line-height: 1.55; min-height: 100vh;
+  transition: background .35s, color .35s;
+}
+h1, h2, h3 { font-family: var(--font-title); font-weight: 400; line-height: 1.1; }
+h3 { font-size: 1.35rem; margin-bottom: 1rem; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+ul { list-style: none; }
+:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--color-muted); font-size: .9rem; }
+.empty { color: var(--color-muted); padding: 1.5rem 0; grid-column: 1 / -1; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

@@ -1,0 +1,11 @@
+# Despliegue en Render (Web Service gratuito)
+services:
+  - type: web
+    name: club-sakila
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
