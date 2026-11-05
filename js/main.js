@@ -1,3 +1,33 @@
+let db = null;
+
+async function initDatabase() {
+    try {
+        // Inicializar sql.js indicando dónde está el archivo .wasm de soporte
+        const SQL = await initSqlJs({
+            locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+        });
+
+        // 2. Descargar tu archivo sakila_club.db como un arreglo binario (buffer)
+        const response = await fetch('database/sakila_club.db');
+        const buffer = await response.arrayBuffer();
+
+        // 3. Cargar la base de datos en la memoria
+        db = new SQL.Database(new Uint8Array(buffer));
+        
+        document.getElementById('resultado').innerText = "¡Base de datos cargada con éxito en el navegador!";
+        
+
+
+    } catch (error) {
+        console.error("Error al cargar la base de datos:", error);
+        document.getElementById('resultado').innerText = "Error al cargar la base de datos.";
+    }
+}
+
+
+// Ejecutar al cargar la página
+initDatabase();
+
 import { api } from './api.js';
 
 /* ============ Utilidades ============ */
