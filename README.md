@@ -1,6 +1,6 @@
 # Sakila Videoclub
 
-Proyecto web de un club de videos basado en la base de datos Sakila.
+Proyecto web de un club de videos basado en la base de datos Sakila
 
 Equipo: Valeria Rodriguez, Jorge Soliz, Wara Tipola
 
