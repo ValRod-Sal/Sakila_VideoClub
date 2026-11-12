@@ -1,4 +1,3 @@
--- Club Sakila (versión simplificada) · SQLite
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE categoria (
@@ -9,14 +8,16 @@ CREATE TABLE categoria (
 CREATE TABLE pelicula (
   pelicula_id   INTEGER PRIMARY KEY AUTOINCREMENT,
   titulo        TEXT NOT NULL,
+  director      TEXT NOT NULL DEFAULT '',
   sinopsis      TEXT NOT NULL,
   anio          INTEGER NOT NULL,
-  duracion      INTEGER NOT NULL,                       -- minutos
+  duracion      INTEGER NOT NULL,
   clasificacion TEXT NOT NULL CHECK (clasificacion IN ('G','PG','PG-13','R')),
-  tarifa_dia    REAL NOT NULL DEFAULT 5.0,              -- Bs por día
-  color1        TEXT NOT NULL DEFAULT '#8aa0b8',        -- etiqueta del disco
+  tarifa_dia    REAL NOT NULL DEFAULT 5.0,
+  color1        TEXT NOT NULL DEFAULT '#8aa0b8',
   color2        TEXT NOT NULL DEFAULT '#2f3d4f',
   trailer_url   TEXT,
+  tmdb_id       INTEGER,
   categoria_id  INTEGER NOT NULL REFERENCES categoria(categoria_id)
 );
 CREATE INDEX idx_pelicula_titulo ON pelicula(titulo);
@@ -36,14 +37,24 @@ CREATE TABLE socio (
   socio_id       INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre         TEXT NOT NULL,
   email          TEXT NOT NULL UNIQUE,
+  password_hash  TEXT NOT NULL,
+  rol            TEXT NOT NULL DEFAULT 'socio' CHECK (rol IN ('socio','admin')),
   fecha_registro TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE sesion (
+  token_hash TEXT PRIMARY KEY,
+  socio_id   INTEGER NOT NULL REFERENCES socio(socio_id) ON DELETE CASCADE,
+  creada     TEXT NOT NULL DEFAULT (datetime('now')),
+  expira     TEXT NOT NULL
+);
+CREATE INDEX idx_sesion_socio ON sesion(socio_id);
 
 CREATE TABLE alquiler (
   alquiler_id      INTEGER PRIMARY KEY AUTOINCREMENT,
   socio_id         INTEGER NOT NULL REFERENCES socio(socio_id),
   pelicula_id      INTEGER NOT NULL REFERENCES pelicula(pelicula_id),
-  fecha_alquiler   TEXT NOT NULL DEFAULT (datetime('now')),   -- UTC
+  fecha_alquiler   TEXT NOT NULL DEFAULT (datetime('now')),
   dias             INTEGER NOT NULL CHECK (dias BETWEEN 1 AND 14),
   fecha_limite     TEXT NOT NULL,
   fecha_devolucion TEXT,
@@ -57,7 +68,6 @@ CREATE TABLE favorito (
   PRIMARY KEY (socio_id, pelicula_id)
 );
 
--- Estado del alquiler y multa simulada (Bs 2.00 por día de atraso). Fechas en ISO 8601 UTC.
 CREATE VIEW v_alquiler AS
 SELECT a.alquiler_id, a.socio_id, a.pelicula_id, p.titulo,
        strftime('%Y-%m-%dT%H:%M:%SZ', a.fecha_alquiler)   AS fecha_alquiler,

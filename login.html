@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Iniciar sesión · Club Sakila</title>
+  <meta name="description" content="Accede a Club Sakila, el videoclub de discos.">
+  <meta name="theme-color" content="#f2f2f2">
+  <link rel="icon" href="assets/icons/disc.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    try {
+      const t = JSON.parse(localStorage.getItem('clubsakila:theme'));
+      document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    } catch { }
+  </script>
+  <script>
+    if (location.protocol === 'file:') addEventListener('DOMContentLoaded', () => {
+      document.body.innerHTML = '<main style="max-width:36rem;margin:4rem auto;padding:0 1rem;font:16px/1.5 system-ui,sans-serif">' +
+        '<h1>Abre la página con un servidor</h1><p>Los navegadores no cargan módulos de JavaScript desde <code>file://</code>.</p>' +
+        '<p>En la terminal de esta carpeta ejecuta <code>npm start</code> y entra a <a href="http://localhost:3000">http://localhost:3000</a>, ' +
+        'o usa la extensión Live Server de VS Code (modo demostración).</p></main>';
+      document.body.classList.add('is-ready');
+    });
+  </script>
+  <script type="module" src="js/login.js"></script>
+</head>
+<body class="auth-page">
+  <div class="grain" aria-hidden="true"></div>
+
+  <main class="auth">
+    <section class="auth__art" aria-hidden="true">
+      <div class="auth__brand">
+        <svg viewBox="0 0 24 24" class="brand__mark">
+          <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+          <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity=".55" />
+          <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+        </svg>
+        <span>CLUB</span><span class="auth__brand-sub">SAKILA</span>
+      </div>
+      <div class="auth__discs" id="authDiscs"></div>
+      <p class="auth__tagline">Un videoclub de discos.<br><em>Elige, alquila y devuelve a tiempo.</em></p>
+    </section>
+
+    <section class="auth__panel">
+      <div class="auth__card">
+        <p class="eyebrow">Acceso de socios</p>
+        <h1 class="auth__title" id="authTitle">Iniciar sesión</h1>
+
+        <div class="auth__tabs" role="tablist" aria-label="Acceso">
+          <button type="button" role="tab" id="tabLogin" aria-selected="true" aria-controls="loginForm">Entrar</button>
+          <button type="button" role="tab" id="tabRegistro" aria-selected="false" aria-controls="registroForm">Crear cuenta</button>
+        </div>
+
+        <form id="loginForm" class="auth__form" role="tabpanel" aria-labelledby="tabLogin" novalidate>
+          <label class="field">Correo
+            <input type="email" name="email" required maxlength="100" autocomplete="username" placeholder="nombre@ucb.edu.bo" autofocus>
+          </label>
+          <label class="field">Contraseña
+            <span class="password">
+              <input type="password" name="password" required maxlength="72" autocomplete="current-password">
+              <button type="button" class="password__toggle" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
+            </span>
+          </label>
+          <p class="auth__error" role="alert" hidden></p>
+          <button class="btn auth__submit" type="submit">Entrar al club</button>
+        </form>
+
+        <form id="registroForm" class="auth__form" role="tabpanel" aria-labelledby="tabRegistro" hidden novalidate>
+          <label class="field">Nombre completo
+            <input name="nombre" required minlength="3" maxlength="80" autocomplete="name"
+                   pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]{3,80}" placeholder="Ej.: Andrea Torrez">
+          </label>
+          <label class="field">Correo
+            <input type="email" name="email" required maxlength="100" autocomplete="email" placeholder="nombre@ucb.edu.bo">
+          </label>
+          <label class="field">Contraseña
+            <span class="password">
+              <input type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password"
+                     pattern="(?=.*[A-Za-zÁÉÍÓÚÑáéíóúñ])(?=.*\d).{8,72}">
+              <button type="button" class="password__toggle" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
+            </span>
+            <small class="muted">Mínimo 8 caracteres, con letras y números.</small>
+          </label>
+          <label class="field">Repite la contraseña
+            <input type="password" name="password2" required maxlength="72" autocomplete="new-password">
+          </label>
+          <p class="auth__error" role="alert" hidden></p>
+          <button class="btn auth__submit" type="submit">Crear cuenta y entrar</button>
+        </form>
+
+        <details class="auth__demo">
+          <summary>Cuentas de prueba</summary>
+          <dl>
+            <div><dt>Socio</dt><dd><button type="button" data-demo="carlos.mamani@ucb.edu.bo|Sakila2026">carlos.mamani@ucb.edu.bo · Sakila2026</button></dd></div>
+            <div><dt>Admin</dt><dd><button type="button" data-demo="admin@clubsakila.bo|Admin2026">admin@clubsakila.bo · Admin2026</button></dd></div>
+          </dl>
+        </details>
+      </div>
+
+      <div class="auth__foot">
+        <button type="button" class="pill-btn" id="themeBtn" aria-label="Cambiar entre tema claro y oscuro">Cine noche</button>
+        <p class="muted">Tecnologías Web I (SIS-214) · UCB “San Pablo”</p>
+      </div>
+      <p class="demo-banner demo-banner--static" id="demoBanner" hidden>
+        <strong>Modo demostración.</strong> No se encontró el servidor; las cuentas y los cambios se guardan solo en este navegador.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
