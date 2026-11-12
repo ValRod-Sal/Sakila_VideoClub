@@ -1,45 +1,16 @@
-let db = null;
+import { api, getMode, onModeChange, onSessionExpired, resetDemo } from './api.js';
+import { DiscStripGallery } from './disc-strip.js';
+import { esc, bs, colorVars, discHTML, discBackHTML, installArtFallback } from './disc.js';
 
-async function initDatabase() {
-    try {
-        // Inicializar sql.js indicando dónde está el archivo .wasm de soporte
-        const SQL = await initSqlJs({
-            locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
-        });
-
-        // 2. Descargar tu archivo sakila_club.db como un arreglo binario (buffer)
-        const response = await fetch('database/sakila_club.db');
-        const buffer = await response.arrayBuffer();
-
-        // 3. Cargar la base de datos en la memoria
-        db = new SQL.Database(new Uint8Array(buffer));
-        
-        document.getElementById('resultado').innerText = "¡Base de datos cargada con éxito en el navegador!";
-        
-
-
-    } catch (error) {
-        console.error("Error al cargar la base de datos:", error);
-        document.getElementById('resultado').innerText = "Error al cargar la base de datos.";
-    }
-}
-
-
-// Ejecutar al cargar la página
-initDatabase();
-
-import { api } from './api.js';
-
-/* ============ Utilidades ============ */
 const $ = (s, r = document) => r.querySelector(s);
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-const bs = n => 'Bs ' + Number(n).toFixed(2);
-const fecha = s => s ? new Date(s).toLocaleDateString('es-BO', { day: '2-digit', month: 'short' }) : '—';
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fecha = s => s ? new Date(s).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+const clampDias = v => Math.max(1, Math.min(14, Math.trunc(Number(v)) || 1));
 const store = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } }
+  get(k, d) { try { const v = localStorage.getItem('clubsakila:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('clubsakila:' + k, JSON.stringify(v)); } catch {  } }
 };
 
 let toastTimer;
@@ -48,38 +19,98 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
+const guard = fn => async (...a) => { try { return await fn(...a); } catch (e) { toast(e.message || 'Algo salió mal.'); } };
 
-/* ============ Estado ============ */
 const state = {
-  todas: [],        // catálogo completo (para carrito, favoritos y ficha)
-  lista: [],        // resultado del filtro actual
+  todas: [],
+  lista: [],
   socios: [],
   alquileres: [],
   favs: new Set(),
-  socioId: store.get('sc_socio', null),
-  cart: store.get('sc_cart', []),   // [{ id, dias }]  (RF-03: persistencia en localStorage)
-  detailId: null
+  user: null,
+  socioId: null,
+  cart: [],
+  active: null,
+  detail: null
 };
-const findPeli = id => state.todas.find(p => Number(p.pelicula_id) === Number(id));
+const findPeli = id => state.todas.find(p => p.pelicula_id === Number(id));
+const isFav = id => state.favs.has(Number(id));
+let strip;
 
-/* ============ Tema claro / oscuro ============ */
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
-  store.set('sc_theme', t);
-  $('#themeBtn').textContent = t === 'dark' ? 'Claro' : 'Oscuro';
+  store.set('theme', t);
+  $('#themeBtn').textContent = t === 'dark' ? 'Modo claro' : 'Cine noche';
+  $('meta[name="theme-color"]').content = t === 'dark' ? '#0b0c0f' : '#f2f2f2';
 }
 
-/* ============ Catálogo (RF-01) ============ */
+function renderHero(p, i = 0, total = 0) {
+  state.active = p || null;
+  const has = Boolean(p);
+  ['#hDetail', '#hTrailer', '#hRent', '#hFav', '#hFlip', '#prevBtn', '#nextBtn'].forEach(s => { $(s).disabled = !has; });
+  if (!has) {
+    $('#hTitle').textContent = 'Sin resultados';
+    ['#hDirector', '#hYear', '#hCast', '#hClub', '#fDur', '#fCat', '#fTar'].forEach(s => { $(s).textContent = '—'; });
+    $('#stripCounter').textContent = '00 / 00';
+    return;
+  }
+  const lines = s => String(s || '').split(',').map(x => esc(x.trim())).filter(Boolean);
+  const cast = lines(p.reparto);
+  $('#hTitle').textContent = p.titulo;
+  $('#hDirector').innerHTML = lines(p.director).join('<br>');
+  $('#hYear').textContent = p.anio;
+  $('#hCast').innerHTML = cast.slice(0, 5).join('<br>') + (cast.length > 5 ? `<br><span class="muted">y ${cast.length - 5} más</span>` : '');
+  $('#hClub').textContent = `${p.categoria} · ${p.clasificacion}`;
+  $('#hRentText').textContent = `+ Carrito · ${bs(p.tarifa_dia)}`;
+  $('#fDur').textContent = `${p.duracion} min`;
+  $('#fCat').textContent = p.categoria;
+  $('#fTar').textContent = bs(p.tarifa_dia);
+  updateHeroFav();
+  const pad = n => String(n).padStart(2, '0');
+  $('#stripCounter').textContent = `${pad(i + 1)} / ${pad(total)}`;
+  $('#srStatus').textContent = `${p.titulo}, disco ${i + 1} de ${total}`;
+  $$('.index-item').forEach(b => b.setAttribute('aria-current', String(Number(b.dataset.idx) === i)));
+}
+function updateHeroFav() {
+  const on = state.active && isFav(state.active.pelicula_id);
+  $('#hFav').setAttribute('aria-pressed', String(Boolean(on)));
+  $('#hFavIcon').textContent = on ? '♥' : '♡';
+}
+
+function renderIndex() {
+  $('#indexCount').textContent = state.lista.length;
+  $('#indexList').innerHTML = state.lista.length
+    ? state.lista.map((p, i) => `
+      <li><button type="button" class="index-item" data-idx="${i}" aria-current="${i === strip.activeIndex}">
+        <span>${esc(p.titulo)}</span><span class="index-item__year">${esc(p.anio)}</span>
+      </button></li>`).join('')
+    : '<li class="muted index-empty">Sin resultados para este filtro</li>';
+}
+function toggleIndex(open) {
+  const menu = $('#indexMenu');
+  const show = typeof open === 'boolean' ? open : menu.hidden;
+  menu.hidden = !show;
+  $('#indexBtn').setAttribute('aria-expanded', String(show));
+}
+
 let reqSeq = 0;
-async function loadLista() {   // consulta el servidor con los filtros actuales
+let firstLoad = true;
+async function applyFilters() {
   const seq = ++reqSeq;
-  const filtros = { q: $('#q').value.trim(), categoria: $('#fCat').value, clasificacion: $('#fCla').value };
+  const filtros = { q: $('#q').value.trim(), categoria: $('#fCategoria').value, clasificacion: $('#fClasif').value };
+  $('#filterDot').hidden = !(filtros.q || filtros.categoria || filtros.clasificacion);
   try {
     const lista = await api.peliculas(filtros);
-    if (seq !== reqSeq) return;     // llegó una respuesta más nueva
+    if (seq !== reqSeq) return;
     state.lista = lista;
+    const keepId = firstLoad ? lista.find(p => p.titulo === 'Uncut Gems')?.pelicula_id : state.active?.pelicula_id;
+    firstLoad = false;
+    const idx = Math.max(0, lista.findIndex(p => p.pelicula_id === keepId));
+    strip.setFilms(lista, idx);
+    if (!lista.length) renderHero(null);
+    renderIndex();
     renderCatalogo();
   } catch (e) {
     if (seq === reqSeq) toast(e.message);
@@ -88,110 +119,148 @@ async function loadLista() {   // consulta el servidor con los filtros actuales
 
 function renderCatalogo() {
   const lista = state.lista;
-  $('#resultCount').textContent = `${lista.length} ${lista.length === 1 ? 'disco' : 'discos'}`;
+  $('#resultCount').textContent = plural(lista.length, 'disco', 'discos');
   $('#discGrid').innerHTML = lista.length ? lista.map(p => `
-    <li class="disc-item" data-id="${p.pelicula_id}" style="--c1:${esc(p.color1)};--c2:${esc(p.color2)}">
-      <button class="disc" type="button" data-action="open" aria-label="Ver ficha de ${esc(p.titulo)}">
-        <span class="disc__surface"><span class="disc__label"></span></span>
-        <span class="disc__title">${esc(p.titulo)}</span>
-        <span class="disc__brand">SAKILA</span>
-      </button>
+    <li class="disc-item" data-id="${p.pelicula_id}" style="${colorVars(p)}">
+      <button class="disc-btn" type="button" data-action="open" aria-label="Ver ficha de ${esc(p.titulo)}">${discHTML(p)}</button>
       <div class="disc-meta">
-        <p>${esc(p.categoria)} · ${p.anio} · <span class="badge badge--${esc(p.clasificacion)}">${esc(p.clasificacion)}</span></p>
+        <p class="disc-meta__title">${esc(p.titulo)}</p>
+        <p>${esc(p.anio)} · ${esc(p.categoria)} · <span class="badge badge--${esc(p.clasificacion)}">${esc(p.clasificacion)}</span></p>
         <div class="disc-actions">
-          <button class="btn btn--ghost btn--sm" type="button" data-action="fav" aria-pressed="${state.favs.has(Number(p.pelicula_id))}">Favorito</button>
           <button class="btn btn--sm" type="button" data-action="add">Alquilar · ${bs(p.tarifa_dia)}/día</button>
+          <button class="btn btn--ghost btn--sm" type="button" data-action="fav" aria-pressed="${isFav(p.pelicula_id)}"
+                  aria-label="${isFav(p.pelicula_id) ? 'Quitar de' : 'Añadir a'} favoritos: ${esc(p.titulo)}">${isFav(p.pelicula_id) ? '♥' : '♡'}</button>
         </div>
       </div>
     </li>`).join('')
     : '<li class="empty">No hay discos con esos filtros. Prueba con otra categoría o borra la búsqueda.</li>';
 }
 
-/* ============ Reproductor: comentario con la info del disco ============ */
 function driveHtml(p) {
   const actores = String(p.reparto || '').split(', ').filter(Boolean);
   const reparto = actores.length
-    ? actores.slice(0, 4).join(', ') + (actores.length > 4 ? ` y ${actores.length - 4} más` : '')
+    ? actores.slice(0, 3).join(', ') + (actores.length > 3 ? ` y ${actores.length - 3} más` : '')
     : 'Sin reparto registrado';
-  const enCarrito = state.cart.find(i => Number(i.id) === Number(p.pelicula_id));
+  const enCarrito = state.cart.find(i => i.id === p.pelicula_id);
   const tuLista = [
-    state.favs.has(Number(p.pelicula_id)) ? 'En tus favoritos' : '',
-    enCarrito ? `En el carrito (${enCarrito.dias} ${enCarrito.dias === 1 ? 'día' : 'días'})` : ''
+    isFav(p.pelicula_id) ? 'En tus favoritos' : '',
+    enCarrito ? `En el carrito (${plural(enCarrito.dias, 'día', 'días')})` : ''
   ].filter(Boolean).join(' · ');
   return `
     <strong class="drive__title">${esc(p.titulo)}</strong>
     <p class="drive__meta">${esc(p.categoria)} · ${esc(p.anio)} · ${esc(p.duracion)} min · <span class="badge badge--${esc(p.clasificacion)}">${esc(p.clasificacion)}</span></p>
     <p class="drive__syn">${esc(p.sinopsis)}</p>
     <dl class="drive__facts">
-      <div><dt>Tarifa</dt><dd>${bs(p.tarifa_dia)} por día</dd></div>
+      <div><dt>Dirección</dt><dd>${esc(p.director)}</dd></div>
       <div><dt>Reparto</dt><dd>${esc(reparto)}</dd></div>
+      <div><dt>Tarifa</dt><dd>${bs(p.tarifa_dia)} por día</dd></div>
       ${tuLista ? `<div><dt>Tu lista</dt><dd>${esc(tuLista)}</dd></div>` : ''}
     </dl>
     <p class="drive__cta">Haz clic en el disco para ver la ficha completa.</p>`;
 }
+let driveId = null;
+function showInDrive(p) {
+  driveId = p?.pelicula_id ?? null;
+  if (!p) return;
+  $('#driveInfo').innerHTML = driveHtml(p);
+  $('#driveLed').classList.add('on');
+}
 
-/* ============ Ficha de película (RF-02) ============ */
+const embed = (url, autoplay) => {
+  const u = new URL(url);
+  u.searchParams.set('rel', '0');
+  if (autoplay) u.searchParams.set('autoplay', '1');
+  return u.href;
+};
 async function openDetail(id) {
-  let p;
-  try { p = await api.pelicula(id); } catch (e) { return toast(e.message); }
-  state.detailId = Number(id);
+  const p = await api.pelicula(id);
+  state.detail = p;
   const dlg = $('#detailDlg');
-  dlg.style.setProperty('--c1', p.color1);
-  dlg.style.setProperty('--c2', p.color2);
+  $('#dDisc').classList.remove('is-flipped');
+  $('#dDiscFront').innerHTML = discHTML(p, { lazy: false });
+  $('#coverAdmin').hidden = state.user?.rol !== 'admin';
+  const sinServidor = getMode() === 'demo';
+  $('#coverFile').disabled = sinServidor;
+  $('#coverReset').disabled = sinServidor;
+  $('#coverAdmin').classList.toggle('is-disabled', sinServidor);
+  $('#coverNote').textContent = sinServidor
+    ? 'Subir portadas necesita el servidor: ejecuta npm start.'
+    : 'JPG, PNG o WebP de hasta 3 MB. “Restablecer” borra la imagen subida y vuelve a buscar el póster en internet (TMDB o Wikipedia).';
+  $('#dDiscBack').innerHTML = discBackHTML();
+  $('#dMeta').textContent = `${p.categoria} · ${p.anio} · ${p.duracion} min`;
   $('#dTitle').textContent = p.titulo;
-  $('#dDiscTitle').textContent = p.titulo;
-  $('#dMeta').textContent = `${p.categoria} · ${p.clasificacion}`;
   $('#dSyn').textContent = p.sinopsis;
+  $('#dDir').textContent = p.director || '—';
   $('#dYear').textContent = p.anio;
   $('#dDur').textContent = `${p.duracion} min`;
   $('#dCla').textContent = p.clasificacion;
   $('#dTar').textContent = `${bs(p.tarifa_dia)} por día`;
   $('#dCast').textContent = p.reparto || 'Sin reparto registrado';
   $('#dTrailer').innerHTML = p.trailer_url
-    ? `<iframe src="${esc(p.trailer_url)}" title="Tráiler de ${esc(p.titulo)}" loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>`
+    ? `<iframe src="${esc(embed(p.trailer_url))}" title="Tráiler de ${esc(p.titulo)}" loading="lazy"
+         allow="encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`
     : '<p class="muted">Esta película aún no tiene tráiler.</p>';
-  const inCart = state.cart.find(i => Number(i.id) === Number(id));
+  const inCart = state.cart.find(i => i.id === p.pelicula_id);
   $('#dDias').value = inCart ? inCart.dias : 3;
+  $('#dAdd').textContent = inCart ? 'Actualizar carrito' : 'Añadir al carrito';
+  updateSubtotal();
   updateDetailFav();
-  dlg.showModal();
+  if (!dlg.open) dlg.showModal();
+}
+function updateSubtotal() {
+  if (!state.detail) return;
+  $('#dSubtotal').textContent = bs(clampDias($('#dDias').value) * state.detail.tarifa_dia);
 }
 function updateDetailFav() {
-  const on = state.favs.has(state.detailId);
-  const b = $('#dFav');
-  b.setAttribute('aria-pressed', on);
-  b.textContent = on ? 'En favoritos' : 'Favorito';
+  if (!state.detail) return;
+  const on = isFav(state.detail.pelicula_id);
+  $('#dFav').setAttribute('aria-pressed', String(on));
+  $('#dFav').textContent = on ? '♥ En favoritos' : '♡ Favorito';
+}
+function openTrailer(p) {
+  if (!p?.trailer_url) return toast('Esta película aún no tiene tráiler.');
+  $('#tTitle').textContent = p.titulo;
+  $('#tSub').textContent = `Dirigida por ${p.director} · ${p.anio}`;
+  $('#tStage').innerHTML = `<iframe src="${esc(embed(p.trailer_url, true))}" title="Tráiler de ${esc(p.titulo)}"
+    allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  $('#trailerDlg').showModal();
 }
 
-/* ============ Carrito (RF-03) ============ */
 function addToCart(id, dias = 3) {
-  dias = Math.max(1, Math.min(14, Number(dias) || 1));
-  const item = state.cart.find(i => Number(i.id) === Number(id));
-  if (item) item.dias = dias; else state.cart.push({ id: Number(id), dias });
+  const p = findPeli(id);
+  if (!p) return;
+  dias = clampDias(dias);
+  const item = state.cart.find(i => i.id === p.pelicula_id);
+  if (item) item.dias = dias; else state.cart.push({ id: p.pelicula_id, dias });
   renderCart();
-  toast(`“${findPeli(id).titulo}” añadido al carrito por ${dias} ${dias === 1 ? 'día' : 'días'}.`);
+  toast(`“${p.titulo}” en el carrito por ${plural(dias, 'día', 'días')}.`);
+  $('#cartCount').classList.remove('bump'); void $('#cartCount').offsetWidth; $('#cartCount').classList.add('bump');
 }
 
 function renderCart() {
+  state.cart = state.cart.filter(i => !state.todas.length || findPeli(i.id));
   const rows = state.cart.map(i => ({ i, p: findPeli(i.id) })).filter(r => r.p);
-  const total = rows.reduce((s, { i, p }) => s + Number(p.tarifa_dia) * i.dias, 0);
+  const total = rows.reduce((s, { i, p }) => s + p.tarifa_dia * i.dias, 0);
   $('#cartCount').textContent = rows.length;
   $('#cartList').innerHTML = rows.length ? rows.map(({ i, p }) => `
     <li class="cart-item" data-id="${p.pelicula_id}">
+      <span class="cart-item__disc">${discHTML(p)}</span>
       <div><strong>${esc(p.titulo)}</strong><small>${bs(p.tarifa_dia)} por día</small></div>
-      <label class="field">Días <input type="number" min="1" max="14" value="${i.dias}" data-action="dias"></label>
-      <span>${bs(Number(p.tarifa_dia) * i.dias)}</span>
+      <label class="field">Días <input type="number" min="1" max="14" value="${i.dias}" data-action="dias" inputmode="numeric"></label>
+      <span class="cart-item__sub">${bs(p.tarifa_dia * i.dias)}</span>
       <button class="icon-btn" type="button" data-action="remove" aria-label="Quitar ${esc(p.titulo)}">✕</button>
-    </li>`).join('') : '<li class="empty">Tu carrito está vacío. Elige un disco del catálogo.</li>';
+    </li>`).join('') : '<li class="empty">Tu carrito está vacío. Elige un disco de la tira o del catálogo.</li>';
   $('#cartTotal').textContent = bs(total);
-  $('#cartPay').disabled = !rows.length;
+  $('#cartPay').disabled = !rows.length || !state.socioId;
   $('#cartClear').disabled = !rows.length;
-  const socio = $('#socioSel').selectedOptions[0];
-  $('#cartSocio').textContent = socio ? `Se registrará a nombre de ${socio.textContent}.` : '';
-  store.set('sc_cart', state.cart);
+  const socio = state.socios.find(s => s.socio_id === state.socioId);
+  $('#cartSocio').textContent = socio ? `Se registrará a nombre de ${socio.nombre} (${socio.email}).` : 'Inicia sesión para confirmar el alquiler.';
+  if (state.user) store.set(`cart:${state.user.socio_id}`, state.cart);
 }
 
 async function confirmarAlquiler() {
-  if (!state.socioId) return toast('Elige un socio en “Mi cuenta”.');
+  if (!state.socioId) return toast('Inicia sesión para continuar.');
+  $('#cartPay').disabled = true;
   try {
     const items = state.cart.map(i => ({ pelicula_id: i.id, dias: i.dias }));
     const r = await api.alquilar(state.socioId, items);
@@ -199,12 +268,13 @@ async function confirmarAlquiler() {
     renderCart();
     $('#cartDlg').close();
     await loadSocio();
-    toast(`Alquiler confirmado. Total: ${bs(r.total)}.`);
+    toast(`Alquiler confirmado: ${plural(r.cantidad, 'disco', 'discos')}, total ${bs(r.total)}.`);
     $('#socio').scrollIntoView();
-  } catch (e) { toast(e.message); }
+  } finally {
+    renderCart();
+  }
 }
 
-/* ============ Cuenta del socio (RF-04) ============ */
 async function loadSocio() {
   if (!state.socioId) return;
   const [alquileres, favoritos] = await Promise.all([api.alquileres(state.socioId), api.favoritos(state.socioId)]);
@@ -212,172 +282,307 @@ async function loadSocio() {
   state.favs = new Set(favoritos.map(Number));
   renderSocio();
   renderCatalogo();
-  if ($('#detailDlg').open) updateDetailFav();
+  updateHeroFav();
+  updateDetailFav();
+  const d = driveId && findPeli(driveId);
+  if (d) showInDrive(d);
 }
 
 function renderSocio() {
   const a = state.alquileres;
-  const pend = a.filter(x => !x.fecha_devolucion).length;
+  const activos = a.filter(x => !x.fecha_devolucion).length;
+  const vencidos = a.filter(x => x.estado === 'Vencido').length;
   const multas = a.reduce((s, x) => s + Number(x.multa), 0);
+  const gastado = a.reduce((s, x) => s + Number(x.total), 0);
   $('#stats').innerHTML = `
     <div class="stat"><strong>${a.length}</strong><span>Alquileres en total</span></div>
-    <div class="stat"><strong>${pend}</strong><span>Pendientes de devolución</span></div>
-    <div class="stat"><strong>${bs(multas)}</strong><span>Multas simuladas</span></div>
-    <div class="stat"><strong>${state.favs.size}</strong><span>Favoritos</span></div>`;
+    <div class="stat"><strong>${activos}</strong><span>Discos en préstamo</span></div>
+    <div class="stat ${vencidos ? 'stat--alert' : ''}"><strong>${vencidos}</strong><span>Préstamos vencidos</span></div>
+    <div class="stat ${multas ? 'stat--alert' : ''}"><strong>${bs(multas)}</strong><span>Multas simuladas</span></div>
+    <div class="stat"><strong>${bs(gastado)}</strong><span>Total en alquileres</span></div>`;
 
   $('#rentalsBody').innerHTML = a.length ? a.map(x => `
     <tr>
-      <td>${esc(x.titulo)}</td>
+      <td><strong>${esc(x.titulo)}</strong><small class="muted"> · ${plural(x.dias, 'día', 'días')}</small></td>
       <td>${fecha(x.fecha_alquiler)}</td>
       <td>${fecha(x.fecha_limite)}</td>
-      <td><span class="badge ${x.estado === 'Vencido' ? 'badge--late' : ''}">${esc(x.estado)}</span></td>
-      <td>${Number(x.multa) ? bs(x.multa) : '—'}</td>
+      <td><span class="badge ${x.estado === 'Vencido' ? 'badge--late' : x.estado === 'Devuelto' ? 'badge--ok' : ''}">${esc(x.estado)}</span></td>
       <td>${bs(x.total)}</td>
+      <td>${Number(x.multa) ? `<strong class="text-alert">${bs(x.multa)}</strong>` : '—'}</td>
       <td>${x.fecha_devolucion ? '' : `<button class="btn btn--sm" type="button" data-return="${x.alquiler_id}">Devolver</button>`}</td>
     </tr>`).join('')
-    : '<tr><td colspan="7" class="empty">Aún no tienes alquileres. Añade un disco al carrito para empezar.</td></tr>';
+    : '<tr><td colspan="7" class="empty">Aún no hay alquileres. Añade un disco al carrito para empezar.</td></tr>';
 
-  const favs = state.todas.filter(p => state.favs.has(Number(p.pelicula_id)));
+  const favs = state.todas.filter(p => isFav(p.pelicula_id));
   $('#wishlist').innerHTML = favs.length ? favs.map(p => `
     <li data-id="${p.pelicula_id}">
-      <span>${esc(p.titulo)}</span>
-      <span><button class="btn btn--ghost btn--sm" type="button" data-action="open">Ver</button>
-      <button class="btn btn--ghost btn--sm" type="button" data-action="fav">Quitar</button></span>
-    </li>`).join('') : '<li class="empty">Marca un disco como favorito y aparecerá aquí.</li>';
+      <span class="wishlist__disc">${discHTML(p)}</span>
+      <div class="wishlist__info"><strong>${esc(p.titulo)}</strong><span class="muted">${esc(p.anio)} · ${bs(p.tarifa_dia)}/día</span></div>
+      <span class="wishlist__actions">
+        <button class="btn btn--ghost btn--sm" type="button" data-action="open">Ver</button>
+        <button class="btn btn--sm" type="button" data-action="add">Alquilar</button>
+        <button class="icon-btn" type="button" data-action="fav" aria-label="Quitar ${esc(p.titulo)} de favoritos">✕</button>
+      </span>
+    </li>`).join('') : '<li class="empty">Marca un disco con ♡ y aparecerá aquí.</li>';
 }
 
 async function toggleFav(id) {
-  if (!state.socioId) return toast('Elige un socio en “Mi cuenta”.');
-  try {
-    const on = state.favs.has(Number(id));
-    await (on ? api.quitarFavorito : api.agregarFavorito)(state.socioId, Number(id));
-    await loadSocio();
-  } catch (e) { toast(e.message); }
+  if (!state.socioId) return toast('Inicia sesión para continuar.');
+  const p = findPeli(id);
+  const on = isFav(id);
+  await (on ? api.quitarFavorito : api.agregarFavorito)(state.socioId, Number(id));
+  await loadSocio();
+  toast(on ? `“${p?.titulo}” salió de tus favoritos.` : `“${p?.titulo}” está en tus favoritos.`);
 }
 
-/* ============ Eventos ============ */
-function bindEvents() {
-  $('#themeBtn').addEventListener('click', () =>
-    setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
-  $('#cartBtn').addEventListener('click', () => { renderCart(); $('#cartDlg').showModal(); });
+function renderSocios() {
+  const admin = state.user?.rol === 'admin';
+  $('#socioPick').hidden = !admin;
+  $('#newSocio').hidden = !admin;
+  if (admin) {
+    $('#socioSel').innerHTML = state.socios.map(s =>
+      `<option value="${s.socio_id}">${esc(s.nombre)}${s.rol === 'admin' ? ' (admin)' : ''}</option>`).join('');
+    $('#socioSel').value = state.socioId ?? '';
+  }
+  const s = state.socios.find(x => x.socio_id === state.socioId);
+  $('#socioInfo').innerHTML = s
+    ? `<strong>${esc(s.nombre)}</strong><span class="muted">${esc(s.email)}${admin && s.socio_id !== state.user.socio_id ? ' · viendo como administrador' : ''}</span>`
+    : '';
+}
 
-  const buscar = debounce(loadLista, 200);
-  $('#q').addEventListener('input', buscar);
-  ['fCat', 'fCla'].forEach(id => $('#' + id).addEventListener('change', loadLista));
+function renderUser() {
+  const u = state.user;
+  const iniciales = u.nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  $('#userAvatar').textContent = iniciales || '·';
+  $('#userName').textContent = u.nombre.split(' ')[0];
+  $('#userMenuName').textContent = u.nombre;
+  $('#userMenuEmail').textContent = u.email;
+  $('#userMenuRol').textContent = u.rol === 'admin' ? 'Administrador' : 'Socio';
+}
+function toggleUserMenu(open) {
+  const menu = $('#userMenu');
+  const show = typeof open === 'boolean' ? open : menu.hidden;
+  menu.hidden = !show;
+  $('#userBtn').setAttribute('aria-expanded', String(show));
+}
+async function logout() {
+  try { await api.logout(); } catch { }
+  location.replace('login.html');
+}
+
+function setPortada(id, url) {
+  const upd = p => { if (p && p.pelicula_id === id) p.portada = url; };
+  state.todas.forEach(upd);
+  state.lista.forEach(upd);
+  upd(state.detail);
+  if (state.detail?.pelicula_id === id) $('#dDiscFront').innerHTML = discHTML(state.detail, { lazy: false });
+  strip.setFilms(state.lista, Math.max(0, strip.activeIndex));
+  renderCatalogo();
+  renderCart();
+  renderSocio();
+}
+async function subirPortada(file) {
+  if (!file || !state.detail) return;
+  const id = state.detail.pelicula_id;
+  $('#coverAdmin').classList.add('is-busy');
+  try {
+    const r = await api.subirPortada(id, file);
+    setPortada(id, r.portada);
+    toast('Portada actualizada.');
+  } finally {
+    $('#coverAdmin').classList.remove('is-busy');
+    $('#coverFile').value = '';
+  }
+}
+async function quitarPortada() {
+  if (!state.detail) return;
+  const id = state.detail.pelicula_id;
+  const r = await api.quitarPortada(id);
+  setPortada(id, r.portada);
+  toast(r.portada ? 'Portada restablecida: se buscará de nuevo el póster.' : 'Portada quitada: el disco usa sus colores.');
+}
+
+function bindEvents() {
+  $('#themeBtn').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+  $('#cartBtn').addEventListener('click', () => { renderCart(); $('#cartDlg').showModal(); });
+  $('#searchBtn').addEventListener('click', () => {
+    $('#catalogo').scrollIntoView();
+    $('#q').focus({ preventScroll: true });
+  });
+
+  $('#prevBtn').addEventListener('click', () => strip.prev());
+  $('#nextBtn').addEventListener('click', () => strip.next());
+  $('#hFlip').addEventListener('click', () => strip.toggleFlipActive());
+  $('#hDetail').addEventListener('click', guard(() => state.active && openDetail(state.active.pelicula_id)));
+  $('#hTrailer').addEventListener('click', () => openTrailer(state.active));
+  $('#hRent').addEventListener('click', () => state.active && addToCart(state.active.pelicula_id));
+  $('#hFav').addEventListener('click', guard(() => state.active && toggleFav(state.active.pelicula_id)));
+
+  $('#indexBtn').addEventListener('click', e => { e.stopPropagation(); toggleIndex(); });
+  $('#indexList').addEventListener('click', e => {
+    const b = e.target.closest('.index-item');
+    if (!b) return;
+    strip.goToIndex(Number(b.dataset.idx));
+    toggleIndex(false);
+    $('#discos').scrollIntoView();
+    $('#discos').focus({ preventScroll: true });
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.index-wrap')) toggleIndex(false); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#indexMenu').hidden) { toggleIndex(false); $('#indexBtn').focus(); }
+  });
+
+  $('#filters').addEventListener('submit', e => e.preventDefault());
+  $('#q').addEventListener('input', debounce(applyFilters, 220));
+  ['#fCategoria', '#fClasif'].forEach(s => $(s).addEventListener('change', applyFilters));
+  $('#filters').addEventListener('reset', () => setTimeout(applyFilters));
 
   const grid = $('#discGrid');
-  grid.addEventListener('click', e => {
+  grid.addEventListener('click', guard(async e => {
     const b = e.target.closest('[data-action]');
     if (!b) return;
-    const id = b.closest('.disc-item').dataset.id;
-    if (b.dataset.action === 'open') openDetail(id);
-    if (b.dataset.action === 'add') addToCart(id, 3);
-    if (b.dataset.action === 'fav') toggleFav(id);
-  });
+    const id = Number(b.closest('.disc-item').dataset.id);
+    if (b.dataset.action === 'open') {
+      strip.goToIndex(state.lista.findIndex(p => p.pelicula_id === id));
+      await openDetail(id);
+    }
+    if (b.dataset.action === 'add') addToCart(id);
+    if (b.dataset.action === 'fav') await toggleFav(id);
+  }));
   const hint = e => {
     const li = e.target.closest('.disc-item');
-    const p = li && findPeli(li.dataset.id);
-    if (p) $('#driveInfo').innerHTML = driveHtml(p);   // se queda visible hasta elegir otro disco
+    if (li && Number(li.dataset.id) !== driveId) showInDrive(findPeli(li.dataset.id));
   };
   grid.addEventListener('mouseover', hint);
   grid.addEventListener('focusin', hint);
 
-  $('#wishlist').addEventListener('click', e => {
-    const b = e.target.closest('[data-action]');
-    if (!b) return;
-    const id = b.closest('li').dataset.id;
-    if (b.dataset.action === 'open') openDetail(id);
-    if (b.dataset.action === 'fav') toggleFav(id);
-  });
-
-  $('#rentalsBody').addEventListener('click', async e => {
-    const b = e.target.closest('[data-return]');
-    if (!b) return;
-    try {
-      await api.devolver(state.socioId, Number(b.dataset.return));
-      await loadSocio();
-      toast('Devolución registrada.');
-    } catch (err) { toast(err.message); }
-  });
-
-  $('#socioSel').addEventListener('change', async e => {
-    state.socioId = Number(e.target.value);
-    store.set('sc_socio', state.socioId);
-    renderCart();
-    await loadSocio();
-  });
-
+  $('#dDisc').addEventListener('click', () => $('#dDisc').classList.toggle('is-flipped'));
+  $('#dDias').addEventListener('input', updateSubtotal);
+  $('#dDias').addEventListener('change', () => { $('#dDias').value = clampDias($('#dDias').value); updateSubtotal(); });
   $('#dAdd').addEventListener('click', () => {
-    addToCart(state.detailId, $('#dDias').value);
+    addToCart(state.detail.pelicula_id, $('#dDias').value);
     $('#detailDlg').close();
   });
-  $('#dFav').addEventListener('click', () => toggleFav(state.detailId));
-  $('#detailDlg').addEventListener('close', () => { $('#dTrailer').innerHTML = ''; }); // detiene el tráiler
+  $('#dFav').addEventListener('click', guard(() => toggleFav(state.detail.pelicula_id)));
+  $('#detailDlg').addEventListener('close', () => { $('#dTrailer').innerHTML = ''; });
+  $('#trailerDlg').addEventListener('close', () => { $('#tStage').innerHTML = ''; });
 
   const cartList = $('#cartList');
   cartList.addEventListener('change', e => {
     if (e.target.dataset.action !== 'dias') return;
-    const id = e.target.closest('.cart-item').dataset.id;
-    const item = state.cart.find(i => Number(i.id) === Number(id));
-    item.dias = Math.max(1, Math.min(14, Number(e.target.value) || 1));
+    const item = state.cart.find(i => i.id === Number(e.target.closest('.cart-item').dataset.id));
+    if (item) item.dias = clampDias(e.target.value);
     renderCart();
   });
   cartList.addEventListener('click', e => {
     const b = e.target.closest('[data-action="remove"]');
     if (!b) return;
     const id = Number(b.closest('.cart-item').dataset.id);
-    state.cart = state.cart.filter(i => Number(i.id) !== id);
+    state.cart = state.cart.filter(i => i.id !== id);
     renderCart();
   });
   $('#cartClear').addEventListener('click', () => { state.cart = []; renderCart(); });
-  $('#cartPay').addEventListener('click', confirmarAlquiler);
+  $('#cartPay').addEventListener('click', guard(confirmarAlquiler));
 
-  $('#socioForm').addEventListener('submit', async e => {
-    e.preventDefault();             // el navegador ya validó required, minlength, pattern y type=email
+  $('#socioSel').addEventListener('change', guard(async e => {
+    state.socioId = Number(e.target.value);
+    store.set('socio-admin', state.socioId);
+    renderSocios();
+    renderCart();
+    await loadSocio();
+  }));
+  $('#userBtn').addEventListener('click', e => { e.stopPropagation(); toggleUserMenu(); });
+  $('#userMenuCuenta').addEventListener('click', () => toggleUserMenu(false));
+  $('#logoutBtn').addEventListener('click', logout);
+  document.addEventListener('click', e => { if (!e.target.closest('.user-wrap')) toggleUserMenu(false); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#userMenu').hidden) { toggleUserMenu(false); $('#userBtn').focus(); }
+  });
+  $('#coverFile').addEventListener('change', guard(e => subirPortada(e.target.files[0])));
+  $('#coverReset').addEventListener('click', guard(quitarPortada));
+  $('#rentalsBody').addEventListener('click', guard(async e => {
+    const b = e.target.closest('[data-return]');
+    if (!b) return;
+    b.disabled = true;
+    const r = await api.devolver(state.socioId, Number(b.dataset.return));
+    await loadSocio();
+    toast(Number(r.multa) ? `Devolución registrada con multa de ${bs(r.multa)}.` : 'Devolución registrada a tiempo.');
+  }));
+  $('#wishlist').addEventListener('click', guard(async e => {
+    const b = e.target.closest('[data-action]');
+    if (!b) return;
+    const id = Number(b.closest('li').dataset.id);
+    if (b.dataset.action === 'open') await openDetail(id);
+    if (b.dataset.action === 'add') addToCart(id);
+    if (b.dataset.action === 'fav') await toggleFav(id);
+  }));
+  $('#socioForm').addEventListener('submit', guard(async e => {
+    e.preventDefault();
     const f = e.target;
     const fd = new FormData(f);
-    try {
-      const nuevo = await api.crearSocio({ nombre: fd.get('nombre').trim(), email: fd.get('email').trim() });
-      state.socios.push(nuevo);
-      state.socioId = nuevo.socio_id;
-      store.set('sc_socio', state.socioId);
-      renderSocios();
-      f.reset();
-      f.closest('details').open = false;
-      renderCart();
-      await loadSocio();
-      toast(`Socio registrado: ${nuevo.nombre}.`);
-    } catch (err) { toast(err.message); }
-  });
+    const nuevo = await api.crearSocio({ nombre: fd.get('nombre').trim(), email: fd.get('email').trim(), password: fd.get('password') });
+    state.socios = await api.socios();
+    state.socioId = nuevo.socio_id;
+    store.set('socio-admin', state.socioId);
+    renderSocios();
+    f.reset();
+    $('#newSocio').open = false;
+    renderCart();
+    await loadSocio();
+    toast(`Socio registrado: ${nuevo.nombre}. Ya puede iniciar sesión con su correo.`);
+  }));
 
-  // Cerrar diálogos al hacer clic en el fondo
-  document.querySelectorAll('dialog').forEach(d =>
-    d.addEventListener('click', e => { if (e.target === d) d.close(); }));
-}
+  $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
 
-/* ============ Inicio ============ */
-function renderSocios() {
-  $('#socioSel').innerHTML = state.socios.map(s => `<option value="${s.socio_id}">${esc(s.nombre)}</option>`).join('');
-  $('#socioSel').value = state.socioId;
+  const links = $$('.nav-link[data-nav]');
+  const io = new IntersectionObserver(entries => entries.forEach(en => {
+    if (en.isIntersecting) links.forEach(l => l.classList.toggle('is-active', l.dataset.nav === en.target.id));
+  }), { rootMargin: '-45% 0px -50% 0px' });
+  ['discos', 'catalogo', 'socio'].forEach(id => io.observe(document.getElementById(id)));
+
+  onModeChange(m => { $('#demoBanner').hidden = m !== 'demo'; });
+  $('#demoReset').addEventListener('click', () => { resetDemo(); location.reload(); });
 }
 
 async function init() {
-  setTheme(store.get('sc_theme', 'dark'));
+  installArtFallback();
+  onSessionExpired(() => location.replace('login.html?expirada=1'));
+  try {
+    state.user = await api.sesion();
+  } catch {
+    location.replace('login.html');
+    return;
+  }
+  document.body.classList.add('is-ready');
+  setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+  renderUser();
+  strip = new DiscStripGallery({
+    stageEl: $('#discStage'),
+    trackEl: $('#discTrack'),
+    keyTarget: $('#discos'),
+    onActiveChange: renderHero,
+    onDiscOpen: guard(p => openDetail(p.pelicula_id))
+  });
   bindEvents();
   try {
-    const [todas, categorias, socios] = await Promise.all([api.peliculas(), api.categorias(), api.socios()]);
+    const admin = state.user.rol === 'admin';
+    const [todas, categorias, socios] = await Promise.all([api.peliculas(), api.categorias(), admin ? api.socios() : [state.user]]);
     state.todas = todas;
-    state.lista = todas;
     state.socios = socios;
-    $('#fCat').insertAdjacentHTML('beforeend', categorias.map(c => `<option>${esc(c)}</option>`).join(''));
-    if (!socios.some(s => Number(s.socio_id) === Number(state.socioId))) state.socioId = socios[0] ? Number(socios[0].socio_id) : null;
-    store.set('sc_socio', state.socioId);
+    const guardado = store.get(`cart:${state.user.socio_id}`, []);
+    state.cart = (Array.isArray(guardado) ? guardado : [])
+      .filter(i => Number.isInteger(i?.id))
+      .map(i => ({ id: i.id, dias: clampDias(i.dias) }));
+    $('#fCategoria').insertAdjacentHTML('beforeend', categorias.map(c => `<option>${esc(c)}</option>`).join(''));
+    const elegido = admin ? Number(store.get('socio-admin', 0)) : 0;
+    state.socioId = socios.some(s => s.socio_id === elegido) ? elegido : state.user.socio_id;
     renderSocios();
-    renderCatalogo();
     renderCart();
+    await applyFilters();
     await loadSocio();
   } catch (e) {
-    $('#discGrid').innerHTML = `<li class="empty">No se pudo cargar el catálogo. Inicia el servidor con <code>npm start</code> y entra por http://localhost:3000. (${esc(e.message)})</li>`;
+    $('#hTitle').textContent = 'Sin conexión';
+    $('#discGrid').innerHTML = `<li class="empty">No se pudo cargar el catálogo. Inicia el servidor con <code>npm start</code> y entra a http://localhost:3000. (${esc(e.message)})</li>`;
   }
 }
 init();

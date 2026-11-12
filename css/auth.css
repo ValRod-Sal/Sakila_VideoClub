@@ -1,0 +1,63 @@
+.auth-page { min-height: 100svh; }
+.auth { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 100svh; }
+
+.auth__art {
+  position: sticky; top: 0; height: 100svh; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto;
+  padding: 2rem clamp(1.5rem, 4vw, 3.5rem); border-right: 1px solid var(--color-line);
+}
+.auth__brand {
+  display: inline-flex; align-items: center; gap: .45rem; width: fit-content; padding: .35rem .65rem;
+  border: 1px solid var(--color-line-strong); font-family: var(--font-mono); font-size: .7rem; font-weight: 600; letter-spacing: .16em;
+}
+.auth__brand { align-self: start; }
+.auth__brand .brand__mark { width: 1.05rem; height: 1.05rem; }
+.auth__brand-sub { border-left: 1px solid var(--color-line); padding-left: .45rem; font-weight: 500; }
+.auth__discs { position: relative; min-height: 360px; }
+.auth__disc { --cd-w: 340px; position: absolute; width: clamp(200px, 26vw, 380px); filter: drop-shadow(var(--shadow-disc)); }
+.auth__disc .cd__spin { animation: spin 14s linear infinite; }
+.auth__disc--1 { left: 4%; top: 34%; transform: rotate(-18deg); z-index: 2; }
+.auth__disc--2 { left: 34%; top: 12%; width: clamp(160px, 19vw, 280px); transform: rotate(14deg); z-index: 1; }
+.auth__disc--2 .cd__spin { animation-duration: 20s; animation-direction: reverse; }
+.auth__disc--3 { left: 46%; top: 50%; width: clamp(140px, 15vw, 230px); transform: rotate(-30deg); z-index: 3; }
+.auth__disc--3 .cd__spin { animation-duration: 10s; }
+.auth__tagline { font-family: var(--font-title); font-size: clamp(1.8rem, 3vw, 2.8rem); line-height: 1.05; letter-spacing: -.02em; }
+.auth__tagline em { color: var(--color-muted); }
+
+.auth__panel { display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; padding: 2rem clamp(1.25rem, 4vw, 3rem); gap: 1.5rem; }
+.auth__card { width: min(420px, 100%); }
+.auth__title { font-size: clamp(2.4rem, 4vw, 3.4rem); text-transform: uppercase; margin: .35rem 0 1.4rem; }
+.auth__tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--color-line); margin-bottom: 1.4rem; }
+.auth__tabs [role="tab"] {
+  padding: .6rem 0; font-family: var(--font-mono); font-size: .74rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--color-muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.auth__tabs [aria-selected="true"] { color: var(--color-text); border-bottom-color: var(--color-line-strong); }
+.auth__form { display: grid; gap: 1rem; }
+.auth__form[hidden] { display: none; }
+.auth__form .field input { width: 100%; padding: .7rem .8rem; font-size: 1rem; }
+.auth__form small { font-size: .74rem; }
+.password { position: relative; display: block; }
+.password input { padding-right: 4.8rem; }
+.password__toggle {
+  position: absolute; right: .35rem; top: 50%; transform: translateY(-50%); padding: .25rem .55rem;
+  font-size: .75rem; border: 1px solid var(--color-line); border-radius: var(--radius); color: var(--color-text);
+}
+.auth__error { padding: .6rem .8rem; border: 1px solid var(--color-accent); color: var(--color-accent); border-radius: var(--radius); font-size: .88rem; }
+.auth__error[hidden] { display: none; }
+.auth__submit { width: 100%; padding: .8rem 1rem; font-size: 1rem; }
+.auth__demo { margin-top: 1.6rem; font-size: .85rem; }
+.auth__demo summary { cursor: pointer; width: fit-content; color: var(--color-muted); border-bottom: 1px solid var(--color-line); }
+.auth__demo dl { display: grid; gap: .4rem; margin-top: .8rem; }
+.auth__demo dl div { display: grid; grid-template-columns: 3.6rem 1fr; align-items: center; }
+.auth__demo dt { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted); }
+.auth__demo dd button { text-align: left; font-family: var(--font-mono); font-size: .8rem; border-bottom: 1px dashed var(--color-line); }
+.auth__demo dd button:hover { border-bottom-color: var(--color-line-strong); }
+.auth__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .6rem 1rem; }
+.demo-banner--static { position: static; transform: none; width: min(420px, 100%); }
+
+@media (max-width: 860px) {
+  .auth { grid-template-columns: minmax(0, 1fr); }
+  .auth__art { position: relative; height: auto; grid-template-rows: auto auto; border-right: 0; border-bottom: 1px solid var(--color-line); padding-bottom: 1.2rem; }
+  .auth__discs { display: none; }
+  .auth__tagline { margin-top: 1rem; font-size: 1.6rem; }
+}

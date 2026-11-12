@@ -1,102 +1,224 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Club Sakila · Videoclub de discos</title>
-  <meta name="description" content="Explora y alquila películas del catálogo Sakila. Cada película es un disco.">
+  <meta name="description" content="Explora y alquila películas en formato disco: tira 3D interactiva, ficha con tráiler, carrito y cuenta de socio. Proyecto SIS-214.">
+  <meta name="theme-color" content="#f2f2f2">
+  <link rel="icon" href="assets/icons/disc.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600&family=Work+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+  <script>
+    try {
+      const t = JSON.parse(localStorage.getItem('clubsakila:theme'));
+      document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    } catch { }
+  </script>
+  <script>
+    if (location.protocol === 'file:') addEventListener('DOMContentLoaded', () => {
+      document.body.innerHTML = '<main style="max-width:36rem;margin:4rem auto;padding:0 1rem;font:16px/1.5 system-ui,sans-serif">' +
+        '<h1>Abre la página con un servidor</h1><p>Los navegadores no cargan módulos de JavaScript desde <code>file://</code>.</p>' +
+        '<p>En la terminal de esta carpeta ejecuta <code>npm start</code> y entra a <a href="http://localhost:3000">http://localhost:3000</a>, ' +
+        'o usa la extensión Live Server de VS Code (modo demostración).</p></main>';
+      document.body.classList.add('is-ready');
+    });
+  </script>
   <script type="module" src="js/main.js"></script>
 </head>
-<body id="top">
+<body id="top" class="app">
+  <a class="skip-link" href="#catalogo">Saltar al catálogo</a>
+
+  <svg class="sr-only" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="sk-charcoal" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="4" seed="7" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.6" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="grain" aria-hidden="true"></div>
+
   <header class="site-header">
-    <a class="brand" href="#top">Club Sakila</a>
-    <nav aria-label="Principal">
-      <a href="#catalogo">Catálogo</a>
-      <a href="#socio">Mi cuenta</a>
+    <nav class="nav-pill" aria-label="Principal">
+      <a href="#top" class="brand" aria-label="Club Sakila, inicio">
+        <svg viewBox="0 0 24 24" class="brand__mark" aria-hidden="true">
+          <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+          <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity=".55" />
+          <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+        </svg>
+        <span class="brand__name">CLUB</span><span class="brand__sub">SAKILA</span>
+      </a>
+      <a href="#discos" class="nav-link" data-nav="discos">Discos</a>
+      <a href="#catalogo" class="nav-link" data-nav="catalogo">Catálogo</a>
+      <a href="#socio" class="nav-link" data-nav="socio">Mi cuenta</a>
+      <div class="index-wrap">
+        <button type="button" class="nav-link index-btn" id="indexBtn" aria-expanded="false" aria-controls="indexMenu">
+          Índice <span class="index-btn__count" id="indexCount">0</span>
+          <svg viewBox="0 0 17 10" fill="none" class="chevron" aria-hidden="true"><path d="M1.5 1.5L8.5 8.5L15.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        <div class="index-menu" id="indexMenu" hidden>
+          <ol class="index-menu__list" id="indexList"></ol>
+        </div>
+      </div>
     </nav>
-    <div class="header-actions">
-      <button class="btn btn--ghost" id="themeBtn" type="button" aria-label="Cambiar tema claro u oscuro">Claro</button>
-      <button class="btn" id="cartBtn" type="button" aria-label="Abrir carrito">Carrito <span id="cartCount" class="count">0</span></button>
+
+    <div class="actions">
+      <button type="button" class="pill-btn" id="searchBtn" title="Buscar y filtrar (RF-01)">
+        Buscar <span class="pill-btn__dot" id="filterDot" hidden></span>
+      </button>
+      <button type="button" class="pill-btn" id="themeBtn" aria-label="Cambiar entre tema claro y oscuro">Cine noche</button>
+      <button type="button" class="pill-btn pill-btn--primary" id="cartBtn" aria-label="Abrir carrito">
+        Carrito <span id="cartCount" class="count">0</span>
+      </button>
+      <div class="user-wrap">
+        <button type="button" class="pill-btn user-btn" id="userBtn" aria-expanded="false" aria-controls="userMenu" aria-label="Mi sesión">
+          <span class="user-btn__avatar" id="userAvatar" aria-hidden="true">·</span>
+          <span class="user-btn__name" id="userName">Cuenta</span>
+        </button>
+        <div class="user-menu" id="userMenu" hidden>
+          <p class="user-menu__name" id="userMenuName"></p>
+          <p class="muted" id="userMenuEmail"></p>
+          <p><span class="badge" id="userMenuRol"></span></p>
+          <a class="btn btn--ghost btn--sm" href="#socio" id="userMenuCuenta">Mi cuenta</a>
+          <button type="button" class="btn btn--sm" id="logoutBtn">Cerrar sesión</button>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main class="container">
-    <section class="hero" aria-labelledby="heroTitle">
-      <div>
-        <h1 id="heroTitle">Club de videos Sakila</h1>
-        <p class="lead">Elige un disco, revisa su ficha y llévalo por los días que quieras.</p>
+  <p class="demo-banner" id="demoBanner" hidden>
+    <strong>Modo demostración.</strong> No se encontró el servidor, así que los cambios se guardan solo en este navegador.
+    Para usar la base de datos ejecuta <code>npm start</code> y entra a <code>http://localhost:3000</code>.
+    <button type="button" class="btn btn--ghost btn--sm" id="demoReset">Restablecer datos</button>
+  </p>
+
+  <main>
+    <section id="discos" class="hero" tabindex="-1" aria-roledescription="carrusel" aria-label="Tira de discos">
+      <h1 class="sr-only">Club Sakila: videoclub de discos</h1>
+
+      <aside class="hero-info" aria-live="polite">
+        <h2 class="hero-info__title" id="hTitle">Cargando…</h2>
+        <dl class="hero-info__list">
+          <div><dt>Dirigida por</dt><dd id="hDirector">—</dd></div>
+          <div><dt>Año</dt><dd id="hYear">—</dd></div>
+          <div><dt>Reparto</dt><dd id="hCast">—</dd></div>
+          <div><dt>Club Sakila</dt><dd id="hClub">—</dd></div>
+        </dl>
+        <div class="hero-cta">
+          <button type="button" class="line-btn" id="hDetail"><span>Ficha y alquiler</span></button>
+          <button type="button" class="line-btn" id="hTrailer"><span>▶ Tráiler</span></button>
+          <button type="button" class="line-btn" id="hRent"><span id="hRentText">+ Carrito</span></button>
+          <div class="hero-cta__icons">
+            <button type="button" class="icon-action" id="hFav" aria-pressed="false" aria-label="Guardar en favoritos" title="Favorito"><span id="hFavIcon">♡</span></button>
+            <button type="button" class="icon-action" id="hFlip" title="Voltear el disco (Espacio)">↻ Voltear</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="disc-stage" id="discStage">
+        <div class="disc-track" id="discTrack"></div>
       </div>
-      <dl class="spec">
-        <div><dt>Formato</dt><dd>Disco</dd></div>
-        <div><dt>Tarifa</dt><dd>Desde Bs 3.50 por día</dd></div>
-        <div><dt>Multa</dt><dd>Bs 2.00 por día de atraso</dd></div>
-      </dl>
+
+      <div class="hero-facts" aria-hidden="true">
+        <div class="fact"><span class="eyebrow">Duración</span><strong id="fDur">—</strong></div>
+        <div class="fact"><span class="eyebrow">Género</span><strong id="fCat">—</strong></div>
+        <div class="fact"><span class="eyebrow">Tarifa por día</span><strong id="fTar">—</strong></div>
+      </div>
+
+      <div class="strip-controls">
+        <button type="button" class="strip-arrow" id="prevBtn" aria-label="Disco anterior">←</button>
+        <span class="strip-counter" id="stripCounter">00 / 00</span>
+        <button type="button" class="strip-arrow" id="nextBtn" aria-label="Disco siguiente">→</button>
+      </div>
+      <p class="strip-hint">Rueda del ratón, arrastre o <kbd>←</kbd> <kbd>→</kbd> · <kbd>Espacio</kbd> voltea · <kbd>Enter</kbd> abre la ficha</p>
+      <p id="srStatus" class="sr-only" aria-live="polite" aria-atomic="true"></p>
     </section>
 
-    <section id="catalogo" aria-labelledby="catTitle">
-      <h2 id="catTitle" class="sr-only">Catálogo de películas</h2>
-      <form class="filters" role="search" onsubmit="return false">
-        <label class="field field--grow">Buscar por título o reparto
-          <input type="search" id="q" placeholder="Ej.: Alien, Penelope…" autocomplete="off">
+    <section id="catalogo" class="catalog-section container" aria-labelledby="catTitle">
+      <div class="section-head">
+        <p class="eyebrow">Exploración completa · RF-01 y RF-02</p>
+        <h2 id="catTitle" class="section-title">Catálogo de discos</h2>
+      </div>
+
+      <form class="filters" role="search" id="filters">
+        <label class="field field--grow">Buscar por título, director o reparto
+          <input type="search" id="q" maxlength="60" placeholder="Ej.: Uncut Gems, Safdie, Penélope Cruz…" autocomplete="off">
         </label>
         <label class="field">Categoría
-          <select id="fCat"><option value="">Todas</option></select>
+          <select id="fCategoria"><option value="">Todas</option></select>
         </label>
         <label class="field">Clasificación
-          <select id="fCla">
+          <select id="fClasif">
             <option value="">Todas</option>
             <option>G</option><option>PG</option><option>PG-13</option><option>R</option>
           </select>
         </label>
-        <p id="resultCount" class="muted" aria-live="polite"></p>
+        <div class="filters__meta">
+          <p id="resultCount" class="muted" aria-live="polite"></p>
+          <button type="reset" class="btn btn--ghost btn--sm" id="clearFilters">Limpiar</button>
+        </div>
       </form>
+
       <div class="catalog">
         <ul class="disc-grid" id="discGrid"><li class="empty">Cargando discos…</li></ul>
-        <aside class="drive" aria-label="Reproductor de discos" aria-live="polite">
-          <div class="drive__body"><div class="drive__tray"><div class="drive__slot"></div></div></div>
+        <aside class="drive" aria-label="Lector de discos" aria-live="polite">
+          <div class="drive__body"><div class="drive__tray"><div class="drive__slot"><span class="drive__led" id="driveLed"></span></div></div></div>
           <div class="drive__bubble" id="driveInfo">
-            <p class="drive__idle">Inserta un disco para comenzar. Pasa el cursor sobre uno y aquí verás su información.</p>
+            <p class="drive__idle">Inserta un disco: pasa el cursor sobre uno y aquí verás su información.</p>
           </div>
         </aside>
       </div>
     </section>
 
-    <section id="socio" class="socio" aria-labelledby="socioTitle">
+    <section id="socio" class="socio container" aria-labelledby="socioTitle">
       <div class="socio__head">
-        <h2 id="socioTitle">Mi cuenta de socio</h2>
-        <label class="field">Socio
+        <div class="section-head">
+          <p class="eyebrow">Gestión de cuenta · RF-04</p>
+          <h2 id="socioTitle" class="section-title">Mi cuenta de socio</h2>
+        </div>
+        <p class="socio__who" id="socioInfo"></p>
+        <label class="field" id="socioPick" hidden>Socio (vista de administrador)
           <select id="socioSel"></select>
         </label>
       </div>
-      <details class="new-socio">
-        <summary>Registrar nuevo socio</summary>
+
+      <details class="new-socio" id="newSocio" hidden>
+        <summary>＋ Registrar nuevo socio</summary>
         <form id="socioForm">
           <label class="field">Nombre completo
             <input name="nombre" required minlength="3" maxlength="80" autocomplete="name"
-                   pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]{3,80}" title="Solo letras y espacios, mínimo 3 caracteres">
+                   pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]{3,80}" placeholder="Ej.: Andrea Torrez"
+                   title="Solo letras y espacios, mínimo 3 caracteres">
           </label>
           <label class="field">Correo
-            <input name="email" type="email" required maxlength="100" autocomplete="email" placeholder="nombre@ucb.edu.bo">
+            <input name="email" type="email" required maxlength="100" autocomplete="off" placeholder="nombre@ucb.edu.bo">
+          </label>
+          <label class="field">Contraseña inicial
+            <input name="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password"
+                   pattern="(?=.*[A-Za-zÁÉÍÓÚÑáéíóúñ])(?=.*\d).{8,72}" title="Mínimo 8 caracteres, con letras y números">
           </label>
           <button class="btn" type="submit">Registrar socio</button>
         </form>
       </details>
+
       <div class="stats" id="stats"></div>
+
       <div class="socio-grid">
         <article>
           <h3>Historial de alquileres</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Película</th><th>Alquilado</th><th>Límite</th><th>Estado</th><th>Multa</th><th>Total</th><th><span class="sr-only">Acción</span></th></tr></thead>
+              <thead>
+                <tr><th>Película</th><th>Alquilado</th><th>Límite</th><th>Estado</th><th>Alquiler</th><th>Multa</th><th><span class="sr-only">Acción</span></th></tr>
+              </thead>
               <tbody id="rentalsBody"></tbody>
             </table>
           </div>
+          <p class="muted table-note">La multa es simulada: Bs 2.00 por cada día de atraso.</p>
         </article>
         <article>
           <h3>Lista de favoritos</h3>
@@ -108,45 +230,76 @@
 
   <footer class="site-footer">
     <p>Club Sakila · Tecnologías Web I (SIS-214) · Universidad Católica Boliviana “San Pablo”</p>
+    <p>Proyecto académico. Títulos, portadas y tráileres pertenecen a sus respectivos dueños.</p>
+    <p class="tmdb-credit">Portadas: <a href="https://www.themoviedb.org/" rel="noopener" target="_blank">TMDB</a>. Este producto usa la API de TMDB, pero no está avalado ni certificado por TMDB.</p>
   </footer>
 
   <dialog id="detailDlg" aria-labelledby="dTitle">
     <form method="dialog"><button class="icon-btn dlg-close" aria-label="Cerrar ficha">✕</button></form>
     <div class="detail">
       <div class="detail__disc">
-        <div class="disc disc--big" id="dDisc">
-          <span class="disc__surface"><span class="disc__label"></span></span>
-          <span class="disc__title" id="dDiscTitle"></span>
-          <span class="disc__brand">SAKILA</span>
+        <button type="button" class="flip-disc" id="dDisc" aria-label="Voltear el disco">
+          <span class="flip-disc__inner">
+            <span class="flip-disc__face flip-disc__face--front" id="dDiscFront"></span>
+            <span class="flip-disc__face flip-disc__face--back" id="dDiscBack"></span>
+          </span>
+        </button>
+        <p class="muted text-center detail__hint">Haz clic en el disco para ver el reverso</p>
+        <div class="cover-admin" id="coverAdmin" hidden>
+          <p class="eyebrow">Portada del disco · administrador</p>
+          <div class="cover-admin__actions">
+            <label class="btn btn--sm cover-admin__upload">Subir imagen
+              <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp" class="sr-only">
+            </label>
+            <button type="button" class="btn btn--ghost btn--sm" id="coverReset">Restablecer</button>
+          </div>
+          <p class="muted cover-admin__note" id="coverNote">JPG, PNG o WebP de hasta 3 MB. “Restablecer” borra la imagen subida y vuelve a buscar el póster en internet (TMDB o Wikipedia).</p>
         </div>
       </div>
       <div class="detail__info">
-        <p class="muted" id="dMeta"></p>
+        <p class="eyebrow" id="dMeta"></p>
         <h2 id="dTitle"></h2>
-        <p id="dSyn"></p>
+        <p id="dSyn" class="detail__syn"></p>
         <dl class="specs">
+          <div><dt>Dirección</dt><dd id="dDir"></dd></div>
           <div><dt>Año</dt><dd id="dYear"></dd></div>
           <div><dt>Duración</dt><dd id="dDur"></dd></div>
           <div><dt>Clasificación</dt><dd id="dCla"></dd></div>
           <div><dt>Tarifa</dt><dd id="dTar"></dd></div>
+          <div><dt>Multa por atraso</dt><dd>Bs 2.00 por día</dd></div>
           <div class="specs__wide"><dt>Reparto</dt><dd id="dCast"></dd></div>
         </dl>
         <div class="trailer" id="dTrailer"></div>
         <div class="detail__buy">
-          <label class="field">Días de préstamo
-            <input type="number" id="dDias" min="1" max="14" value="3">
+          <label class="field">Días de préstamo (1 a 14)
+            <input type="number" id="dDias" min="1" max="14" value="3" inputmode="numeric">
           </label>
+          <div class="detail__subtotal"><span class="eyebrow">Subtotal</span><strong id="dSubtotal">Bs 0.00</strong></div>
           <button class="btn" id="dAdd" type="button">Añadir al carrito</button>
-          <button class="btn btn--ghost" id="dFav" type="button" aria-pressed="false">Favorito</button>
+          <button class="btn btn--ghost" id="dFav" type="button" aria-pressed="false">♡ Favorito</button>
         </div>
       </div>
     </div>
   </dialog>
 
+  <dialog id="trailerDlg" class="trailer-dlg" aria-labelledby="tTitle">
+    <div class="trailer-dlg__bar">
+      <div>
+        <p class="eyebrow" id="tSub"></p>
+        <h3 id="tTitle"></h3>
+      </div>
+      <form method="dialog"><button class="pill-btn">Cerrar ✕</button></form>
+    </div>
+    <div class="trailer-dlg__stage" id="tStage"></div>
+  </dialog>
+
   <dialog id="cartDlg" aria-labelledby="cartTitle">
     <div class="cart">
       <header class="cart__head">
-        <h2 id="cartTitle">Tu carrito</h2>
+        <div>
+          <p class="eyebrow">Reserva y préstamo · RF-03</p>
+          <h2 id="cartTitle">Tu carrito</h2>
+        </div>
         <form method="dialog"><button class="icon-btn" aria-label="Cerrar carrito">✕</button></form>
       </header>
       <ul id="cartList" class="cart__list"></ul>

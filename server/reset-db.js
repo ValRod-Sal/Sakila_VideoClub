@@ -1,7 +1,6 @@
 'use strict';
-// npm run db:reset  → borra la base y la vuelve a crear con los datos de ejemplo
 const fs = require('node:fs');
 const { open, DB_FILE } = require('./db');
-fs.rmSync(DB_FILE, { force: true });
+for (const f of [DB_FILE, DB_FILE + '-wal', DB_FILE + '-shm', DB_FILE + '-journal']) fs.rmSync(f, { force: true });
 open().close();
 console.log('Listo: base de datos restablecida.');

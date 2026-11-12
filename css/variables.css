@@ -1,36 +1,45 @@
-/* Tokens de diseño: escala de grises + un azul desaturado. */
 :root {
-  --font-title: 'Bodoni Moda', 'Playfair Display', Georgia, serif;
-  --font-display: 'Zen Dots', 'Bodoni Moda', Georgia, sans-serif;
-  --font-main: 'Work Sans', Arial, sans-serif;
+  --font-title: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-main: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --font-mono: 'Space Grotesk', ui-monospace, 'SFMono-Regular', Consolas, monospace;
   --radius: 4px;
-  --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --header-h: 4.25rem;
+  --disc-size: clamp(240px, min(36vw, 56svh), 560px);
 }
-/* Claro: papel de cartelera */
+
 [data-theme="light"] {
   color-scheme: light;
-  --color-bg: #eceef0;
-  --color-surface: #f8f9fa;
-  --color-text: #15181d;
-  --color-muted: #646c76;
-  --color-line: #15181d;
-  --color-primary: #15181d;
-  --color-on-primary: #eceef0;
-  --color-secondary: #4f6a8a;   /* azul desaturado */
-  --color-accent: #4f6a8a;
-  --color-on-accent: #f8f9fa;
+  --color-bg: #f2f2f2;
+  --color-surface: #ffffff;
+  --color-glass: rgba(255, 255, 255, .86);
+  --color-text: #0d0e10;
+  --color-muted: #5a5d64;
+  --color-line: rgba(13, 14, 16, .2);
+  --color-line-strong: #0d0e10;
+  --color-primary: #0d0e10;
+  --color-on-primary: #f2f2f2;
+  --color-accent: #891a20;
+  --color-on-accent: #f7f3f3;
+  --color-ok: #2f6b45;
+  --color-sketch: #141416;
+  --shadow-disc: 0 30px 60px rgba(0, 0, 0, .26), 0 8px 20px rgba(0, 0, 0, .14);
 }
-/* Oscuro */
+
 [data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #0e1013;
-  --color-surface: #161a1f;
-  --color-text: #e6e9ed;
-  --color-muted: #8e96a1;
-  --color-line: #e6e9ed;
-  --color-primary: #e6e9ed;
-  --color-on-primary: #0e1013;
-  --color-secondary: #8fa6c1;   /* azul desaturado */
-  --color-accent: #8fa6c1;
-  --color-on-accent: #0e1013;
+  --color-bg: #0b0c0f;
+  --color-surface: #14171d;
+  --color-glass: rgba(20, 23, 29, .86);
+  --color-text: #e8e5df;
+  --color-muted: #9c978e;
+  --color-line: rgba(232, 229, 223, .18);
+  --color-line-strong: #e8e5df;
+  --color-primary: #e8e5df;
+  --color-on-primary: #0b0c0f;
+  --color-accent: #d4af37;
+  --color-on-accent: #0b0c0f;
+  --color-ok: #7fbf8e;
+  --color-sketch: #e8e5df;
+  --shadow-disc: 0 34px 70px rgba(0, 0, 0, .7), 0 10px 25px rgba(0, 0, 0, .5);
 }
