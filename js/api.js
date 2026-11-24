@@ -172,6 +172,13 @@ const demo = {
     return db.socios.map(publico).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
   },
   async crearSocio(datos) { const db = await loadDemo(); requireUser(db, 'admin'); return demoCrearSocio(db, datos); },
+  async adminAlquileres() {
+    const db = await loadDemo(); requireUser(db, 'admin');
+    return db.alquileres.map(a => {
+      const s = db.socios.find(x => x.socio_id === a.socio_id);
+      return { ...vistaAlquiler(db, a), socio: s?.nombre ?? '—', socio_email: s?.email ?? '' };
+    }).sort((a, b) => b.fecha_alquiler.localeCompare(a.fecha_alquiler) || b.alquiler_id - a.alquiler_id);
+  },
   async alquileres(socioId) {
     const db = await loadDemo(); const sid = cuentaPropia(db, socioId);
     return db.alquileres.filter(a => a.socio_id === sid).map(a => vistaAlquiler(db, a))
@@ -231,6 +238,7 @@ const server = {
   categorias: () => request('/categorias'),
   socios: () => request('/socios'),
   crearSocio: datos => request('/socios', { method: 'POST', body: datos }),
+  adminAlquileres: () => request('/admin/alquileres'),
   alquileres: socioId => request(`/socios/${socioId}/alquileres`),
   alquilar: (socioId, items) => request(`/socios/${socioId}/alquileres`, { method: 'POST', body: { items } }),
   devolver: (socioId, alquilerId) => request(`/socios/${socioId}/alquileres/${alquilerId}/devolucion`, { method: 'PATCH' }),

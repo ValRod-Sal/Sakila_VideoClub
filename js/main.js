@@ -1,6 +1,7 @@
 import { api, getMode, onModeChange, onSessionExpired, resetDemo } from './api.js';
 import { DiscStripGallery } from './disc-strip.js';
 import { esc, bs, colorVars, discHTML, discBackHTML, installArtFallback } from './disc.js';
+import { createAdminPanel } from './admin.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -38,6 +39,7 @@ const state = {
 const findPeli = id => state.todas.find(p => p.pelicula_id === Number(id));
 const isFav = id => state.favs.has(Number(id));
 let strip;
+let admin = null;
 
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
@@ -275,8 +277,17 @@ async function confirmarAlquiler() {
   }
 }
 
+async function verCuentaDe(id) {
+  state.socioId = id;
+  store.set('socio-admin', state.socioId);
+  renderSocios();
+  renderCart();
+  await loadSocio();
+}
+
 async function loadSocio() {
   if (!state.socioId) return;
+  admin?.refrescar();
   const [alquileres, favoritos] = await Promise.all([api.alquileres(state.socioId), api.favoritos(state.socioId)]);
   state.alquileres = alquileres;
   state.favs = new Set(favoritos.map(Number));
@@ -484,13 +495,7 @@ function bindEvents() {
   $('#cartClear').addEventListener('click', () => { state.cart = []; renderCart(); });
   $('#cartPay').addEventListener('click', guard(confirmarAlquiler));
 
-  $('#socioSel').addEventListener('change', guard(async e => {
-    state.socioId = Number(e.target.value);
-    store.set('socio-admin', state.socioId);
-    renderSocios();
-    renderCart();
-    await loadSocio();
-  }));
+  $('#socioSel').addEventListener('change', guard(e => verCuentaDe(Number(e.target.value))));
   $('#userBtn').addEventListener('click', e => { e.stopPropagation(); toggleUserMenu(); });
   $('#userMenuCuenta').addEventListener('click', () => toggleUserMenu(false));
   $('#logoutBtn').addEventListener('click', logout);
@@ -544,6 +549,24 @@ function bindEvents() {
   $('#demoReset').addEventListener('click', () => { resetDemo(); location.reload(); });
 }
 
+function initAdmin() {
+  admin = createAdminPanel({
+    toast,
+    getPeliculas: () => state.todas,
+    getSocios: () => state.socios,
+    onCambio: loadSocio,
+    onVerCuenta: guard(async id => {
+      await verCuentaDe(id);
+      $('#socio').scrollIntoView();
+    })
+  });
+  const abrir = () => { toggleUserMenu(false); admin.abrir(); };
+  $('#adminNav').hidden = false;
+  $('#userMenuAdmin').hidden = false;
+  $('#adminNav').addEventListener('click', abrir);
+  $('#userMenuAdmin').addEventListener('click', abrir);
+}
+
 async function init() {
   installArtFallback();
   onSessionExpired(() => location.replace('login.html?expirada=1'));
@@ -565,8 +588,8 @@ async function init() {
   });
   bindEvents();
   try {
-    const admin = state.user.rol === 'admin';
-    const [todas, categorias, socios] = await Promise.all([api.peliculas(), api.categorias(), admin ? api.socios() : [state.user]]);
+    const esAdmin = state.user.rol === 'admin';
+    const [todas, categorias, socios] = await Promise.all([api.peliculas(), api.categorias(), esAdmin ? api.socios() : [state.user]]);
     state.todas = todas;
     state.socios = socios;
     const guardado = store.get(`cart:${state.user.socio_id}`, []);
@@ -574,11 +597,15 @@ async function init() {
       .filter(i => Number.isInteger(i?.id))
       .map(i => ({ id: i.id, dias: clampDias(i.dias) }));
     $('#fCategoria').insertAdjacentHTML('beforeend', categorias.map(c => `<option>${esc(c)}</option>`).join(''));
-    const elegido = admin ? Number(store.get('socio-admin', 0)) : 0;
+    const elegido = esAdmin ? Number(store.get('socio-admin', 0)) : 0;
     state.socioId = socios.some(s => s.socio_id === elegido) ? elegido : state.user.socio_id;
     renderSocios();
     renderCart();
     await applyFilters();
+    if (esAdmin) {
+      initAdmin();
+      admin.precargar();
+    }
     await loadSocio();
   } catch (e) {
     $('#hTitle').textContent = 'Sin conexión';

@@ -180,6 +180,11 @@ route('DELETE', '/api/portadas/:id', 'admin', async ({ params }) => {
   return portadas.quitar(id);
 });
 
+route('GET', '/api/admin/alquileres', 'admin', () =>
+  db.prepare(`SELECT v.*, s.nombre AS socio, s.email AS socio_email
+              FROM v_alquiler v JOIN socio s ON s.socio_id = v.socio_id
+              ORDER BY v.fecha_alquiler DESC, v.alquiler_id DESC`).all());
+
 route('GET', '/api/socios', 'admin', () =>
   db.prepare('SELECT socio_id, nombre, email, rol FROM socio ORDER BY nombre').all());
 
