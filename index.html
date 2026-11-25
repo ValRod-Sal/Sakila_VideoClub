@@ -52,11 +52,14 @@
         </svg>
         <span class="brand__name">CLUB</span><span class="brand__sub">SAKILA</span>
       </a>
-      <a href="#discos" class="nav-link" data-nav="discos">Discos</a>
-      <a href="#catalogo" class="nav-link" data-nav="catalogo">Catálogo</a>
-      <a href="#socio" class="nav-link" data-nav="socio">Mi cuenta</a>
-      <button type="button" class="nav-link admin-link" id="adminNav" hidden aria-haspopup="dialog" title="Panel de administración">Admin <span class="admin-link__dot" id="adminNavDot" hidden></span></button>
-      <div class="index-wrap">
+      <a href="#discos" class="nav-link solo-socio" data-nav="discos">Discos</a>
+      <a href="#catalogo" class="nav-link solo-socio" data-nav="catalogo">Catálogo</a>
+      <a href="#socio" class="nav-link solo-socio" data-nav="socio">Mi cuenta</a>
+      <button type="button" class="nav-link solo-admin" data-admin-tab="prestamos">Préstamos <span class="admin-link__dot" id="adminNavDot" hidden></span></button>
+      <button type="button" class="nav-link solo-admin" data-admin-tab="historial">Historial</button>
+      <button type="button" class="nav-link solo-admin" data-admin-tab="peliculas">Discos</button>
+      <button type="button" class="nav-link solo-admin" data-admin-tab="socios">Socios</button>
+      <div class="index-wrap solo-socio">
         <button type="button" class="nav-link index-btn" id="indexBtn" aria-expanded="false" aria-controls="indexMenu">
           Índice <span class="index-btn__count" id="indexCount">0</span>
           <svg viewBox="0 0 17 10" fill="none" class="chevron" aria-hidden="true"><path d="M1.5 1.5L8.5 8.5L15.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -68,11 +71,11 @@
     </nav>
 
     <div class="actions">
-      <button type="button" class="pill-btn" id="searchBtn" title="Buscar y filtrar (RF-01)">
+      <button type="button" class="pill-btn solo-socio" id="searchBtn" title="Buscar y filtrar (RF-01)">
         Buscar <span class="pill-btn__dot" id="filterDot" hidden></span>
       </button>
       <button type="button" class="pill-btn" id="themeBtn" aria-label="Cambiar entre tema claro y oscuro">Cine noche</button>
-      <button type="button" class="pill-btn pill-btn--primary" id="cartBtn" aria-label="Abrir carrito">
+      <button type="button" class="pill-btn pill-btn--primary solo-socio" id="cartBtn" aria-label="Abrir carrito">
         Carrito <span id="cartCount" class="count">0</span>
       </button>
       <div class="user-wrap">
@@ -84,8 +87,7 @@
           <p class="user-menu__name" id="userMenuName"></p>
           <p class="muted" id="userMenuEmail"></p>
           <p><span class="badge" id="userMenuRol"></span></p>
-          <a class="btn btn--ghost btn--sm" href="#socio" id="userMenuCuenta">Mi cuenta</a>
-          <button type="button" class="btn btn--ghost btn--sm" id="userMenuAdmin" hidden>Panel de administración</button>
+          <a class="btn btn--ghost btn--sm solo-socio" href="#socio" id="userMenuCuenta">Mi cuenta</a>
           <button type="button" class="btn btn--sm" id="logoutBtn">Cerrar sesión</button>
         </div>
       </div>
@@ -99,7 +101,7 @@
   </p>
 
   <main>
-    <section id="discos" class="hero" tabindex="-1" aria-roledescription="carrusel" aria-label="Tira de discos">
+    <section id="discos" class="hero solo-socio" tabindex="-1" aria-roledescription="carrusel" aria-label="Tira de discos">
       <h1 class="sr-only">Club Sakila: videoclub de discos</h1>
 
       <aside class="hero-info" aria-live="polite">
@@ -140,7 +142,7 @@
       <p id="srStatus" class="sr-only" aria-live="polite" aria-atomic="true"></p>
     </section>
 
-    <section id="catalogo" class="catalog-section container" aria-labelledby="catTitle">
+    <section id="catalogo" class="catalog-section container solo-socio" aria-labelledby="catTitle">
       <div class="section-head">
         <p class="eyebrow">Exploración completa · RF-01 y RF-02</p>
         <h2 id="catTitle" class="section-title">Catálogo de discos</h2>
@@ -176,36 +178,15 @@
       </div>
     </section>
 
-    <section id="socio" class="socio container" aria-labelledby="socioTitle">
+    <section id="socio" class="socio container solo-socio" aria-labelledby="socioTitle">
       <div class="socio__head">
         <div class="section-head">
           <p class="eyebrow">Gestión de cuenta · RF-04</p>
           <h2 id="socioTitle" class="section-title">Mi cuenta de socio</h2>
         </div>
         <p class="socio__who" id="socioInfo"></p>
-        <label class="field" id="socioPick" hidden>Socio (vista de administrador)
-          <select id="socioSel"></select>
-        </label>
       </div>
 
-      <details class="new-socio" id="newSocio" hidden>
-        <summary>＋ Registrar nuevo socio</summary>
-        <form id="socioForm">
-          <label class="field">Nombre completo
-            <input name="nombre" required minlength="3" maxlength="80" autocomplete="name"
-                   pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]{3,80}" placeholder="Ej.: Andrea Torrez"
-                   title="Solo letras y espacios, mínimo 3 caracteres">
-          </label>
-          <label class="field">Correo
-            <input name="email" type="email" required maxlength="100" autocomplete="off" placeholder="nombre@ucb.edu.bo">
-          </label>
-          <label class="field">Contraseña inicial
-            <input name="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password"
-                   pattern="(?=.*[A-Za-zÁÉÍÓÚÑáéíóúñ])(?=.*\d).{8,72}" title="Mínimo 8 caracteres, con letras y números">
-          </label>
-          <button class="btn" type="submit">Registrar socio</button>
-        </form>
-      </details>
 
       <div class="stats" id="stats"></div>
 
@@ -227,6 +208,97 @@
           <ul class="wishlist" id="wishlist"></ul>
         </article>
       </div>
+    </section>
+    <section id="admin" class="admin container solo-admin" aria-labelledby="adminTitle">
+      <header class="admin__head">
+        <div>
+          <p class="eyebrow">Administración · Club Sakila · <span id="adminHoy"></span></p>
+          <h2 id="adminTitle">Mostrador del club</h2>
+          <p class="muted admin__updated" id="adminUpdated" aria-live="polite"></p>
+        </div>
+        <div class="admin__tools">
+          <button type="button" class="pill-btn" id="adminRefresh">↻ Actualizar</button>
+          <button type="button" class="pill-btn" id="adminCsv">Exportar CSV</button>
+        </div>
+      </header>
+
+      <div class="stats admin__stats" id="adminStats"></div>
+
+      <div class="admin__tabs" role="tablist" aria-label="Secciones del panel">
+        <button type="button" role="tab" id="atab-prestamos" aria-controls="apanel-prestamos" aria-selected="true">Préstamos activos <span class="admin__tabcount" id="acount-prestamos">0</span></button>
+        <button type="button" role="tab" id="atab-historial" aria-controls="apanel-historial" aria-selected="false" tabindex="-1">Historial <span class="admin__tabcount" id="acount-historial">0</span></button>
+        <button type="button" role="tab" id="atab-peliculas" aria-controls="apanel-peliculas" aria-selected="false" tabindex="-1">Discos <span class="admin__tabcount" id="acount-peliculas">0</span></button>
+        <button type="button" role="tab" id="atab-socios" aria-controls="apanel-socios" aria-selected="false" tabindex="-1">Socios <span class="admin__tabcount" id="acount-socios">0</span></button>
+      </div>
+
+      <div class="admin__filters">
+        <label class="field field--grow">Buscar socio o película
+          <input type="search" id="adminQ" maxlength="60" placeholder="Ej.: Carlos, Uncut Gems…" autocomplete="off">
+        </label>
+        <label class="field" id="adminEstadoField">Estado
+          <select id="adminEstado">
+            <option value="">Todos</option>
+            <option>En curso</option>
+            <option>Vencido</option>
+            <option>Devuelto</option>
+          </select>
+        </label>
+      </div>
+
+      <section role="tabpanel" id="apanel-prestamos" aria-labelledby="atab-prestamos" class="admin__panel">
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Devolver hasta</th><th>Tiempo para devolver</th><th>Multa</th><th><span class="sr-only">Acción</span></th></tr></thead>
+            <tbody id="adminPrestamos"></tbody>
+          </table>
+        </div>
+        <p class="muted table-note">Ordenados por urgencia: primero los vencidos, luego los que vencen antes. La multa se acumula a Bs 2.00 por día de atraso.</p>
+      </section>
+
+      <section role="tabpanel" id="apanel-historial" aria-labelledby="atab-historial" class="admin__panel" hidden>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Límite</th><th>Devuelto</th><th>Estado</th><th>Alquiler</th><th>Multa</th></tr></thead>
+            <tbody id="adminHistorial"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section role="tabpanel" id="apanel-peliculas" aria-labelledby="atab-peliculas" class="admin__panel" hidden>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Disco</th><th>Disponibilidad</th><th>Veces alquilado</th><th>Popularidad</th><th>Ingresos</th><th><span class="sr-only">Acción</span></th></tr></thead>
+            <tbody id="adminPeliculas"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section role="tabpanel" id="apanel-socios" aria-labelledby="atab-socios" class="admin__panel" hidden>
+          <details class="new-socio" id="newSocio">
+            <summary>＋ Registrar nuevo socio</summary>
+            <form id="socioForm">
+              <label class="field">Nombre completo
+                <input name="nombre" required minlength="3" maxlength="80" autocomplete="name"
+                       pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]{3,80}" placeholder="Ej.: Andrea Torrez"
+                       title="Solo letras y espacios, mínimo 3 caracteres">
+              </label>
+              <label class="field">Correo
+                <input name="email" type="email" required maxlength="100" autocomplete="off" placeholder="nombre@ucb.edu.bo">
+              </label>
+              <label class="field">Contraseña inicial
+                <input name="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password"
+                       pattern="(?=.*[A-Za-zÁÉÍÓÚÑáéíóúñ])(?=.*\d).{8,72}" title="Mínimo 8 caracteres, con letras y números">
+              </label>
+              <button class="btn" type="submit">Registrar socio</button>
+            </form>
+          </details>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Socio</th><th>Rol</th><th>Alquileres</th><th>En préstamo</th><th>Vencidos</th><th>Multas pendientes</th><th>Total gastado</th><th><span class="sr-only">Acción</span></th></tr></thead>
+            <tbody id="adminSocios"></tbody>
+          </table>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -314,82 +386,6 @@
     </div>
   </dialog>
 
-  <dialog id="adminDlg" class="admin-dlg" aria-labelledby="adminTitle">
-    <div class="admin">
-      <header class="admin__head">
-        <div>
-          <p class="eyebrow">Administración · Club Sakila</p>
-          <h2 id="adminTitle">Mostrador del club</h2>
-          <p class="muted admin__updated" id="adminUpdated" aria-live="polite"></p>
-        </div>
-        <div class="admin__tools">
-          <button type="button" class="pill-btn" id="adminRefresh">↻ Actualizar</button>
-          <button type="button" class="pill-btn" id="adminCsv">Exportar CSV</button>
-          <form method="dialog"><button class="icon-btn" aria-label="Cerrar panel de administración">✕</button></form>
-        </div>
-      </header>
-
-      <div class="stats admin__stats" id="adminStats"></div>
-
-      <div class="admin__tabs" role="tablist" aria-label="Secciones del panel">
-        <button type="button" role="tab" id="atab-prestamos" aria-controls="apanel-prestamos" aria-selected="true">Préstamos activos <span class="admin__tabcount" id="acount-prestamos">0</span></button>
-        <button type="button" role="tab" id="atab-historial" aria-controls="apanel-historial" aria-selected="false" tabindex="-1">Historial <span class="admin__tabcount" id="acount-historial">0</span></button>
-        <button type="button" role="tab" id="atab-peliculas" aria-controls="apanel-peliculas" aria-selected="false" tabindex="-1">Discos <span class="admin__tabcount" id="acount-peliculas">0</span></button>
-        <button type="button" role="tab" id="atab-socios" aria-controls="apanel-socios" aria-selected="false" tabindex="-1">Socios <span class="admin__tabcount" id="acount-socios">0</span></button>
-      </div>
-
-      <div class="admin__filters">
-        <label class="field field--grow">Buscar socio o película
-          <input type="search" id="adminQ" maxlength="60" placeholder="Ej.: Carlos, Uncut Gems…" autocomplete="off">
-        </label>
-        <label class="field" id="adminEstadoField">Estado
-          <select id="adminEstado">
-            <option value="">Todos</option>
-            <option>En curso</option>
-            <option>Vencido</option>
-            <option>Devuelto</option>
-          </select>
-        </label>
-      </div>
-
-      <section role="tabpanel" id="apanel-prestamos" aria-labelledby="atab-prestamos" class="admin__panel">
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Devolver hasta</th><th>Tiempo para devolver</th><th>Multa</th><th><span class="sr-only">Acción</span></th></tr></thead>
-            <tbody id="adminPrestamos"></tbody>
-          </table>
-        </div>
-        <p class="muted table-note">Ordenados por urgencia: primero los vencidos, luego los que vencen antes. La multa se acumula a Bs 2.00 por día de atraso.</p>
-      </section>
-
-      <section role="tabpanel" id="apanel-historial" aria-labelledby="atab-historial" class="admin__panel" hidden>
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Límite</th><th>Devuelto</th><th>Estado</th><th>Alquiler</th><th>Multa</th></tr></thead>
-            <tbody id="adminHistorial"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section role="tabpanel" id="apanel-peliculas" aria-labelledby="atab-peliculas" class="admin__panel" hidden>
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Disco</th><th>Disponibilidad</th><th>Veces alquilado</th><th>Popularidad</th><th>Ingresos</th></tr></thead>
-            <tbody id="adminPeliculas"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section role="tabpanel" id="apanel-socios" aria-labelledby="atab-socios" class="admin__panel" hidden>
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Socio</th><th>Rol</th><th>Alquileres</th><th>En préstamo</th><th>Vencidos</th><th>Multas pendientes</th><th>Total gastado</th><th><span class="sr-only">Acción</span></th></tr></thead>
-            <tbody id="adminSocios"></tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-  </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

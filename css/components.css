@@ -353,17 +353,19 @@ tbody tr:hover { background: color-mix(in srgb, var(--color-line) 35%, transpare
 }
 
 /* ---------- Panel de administración ---------- */
-.admin-link { display: inline-flex; align-items: center; gap: .35rem; }
-.admin-link[hidden] { display: none; }
-.admin-link__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent); }
-.admin-link__dot[hidden] { display: none; }
-#userMenuAdmin[hidden] { display: none; }
+/* Vista por rol: el administrador no ve la tienda; el socio no ve el mostrador. */
+body:not(.is-admin) .solo-admin { display: none !important; }
+.is-admin .solo-socio { display: none !important; }
+.is-admin .detail__buy, .is-admin .detail__hint { display: none; }
 
-.admin-dlg { width: min(1180px, 96vw); }
-.admin { padding: 1.6rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.2rem; }
+.admin-link__dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent); }
+.admin-link__dot[hidden] { display: none; }
+
+.admin { padding: calc(var(--header-h) + 2.4rem) 0 4.5rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.4rem; }
 .admin > * { min-width: 0; }
 .admin__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-.admin__head h2 { font-size: clamp(2rem, 4vw, 2.6rem); text-transform: uppercase; margin-top: .2rem; line-height: 1; }
+.admin__head h2 { font-size: clamp(2.2rem, 4.5vw, 3.4rem); text-transform: uppercase; margin-top: .3rem; line-height: 1; }
+.admin .new-socio { margin: 0 0 1.2rem; }
 .admin__updated { font-family: var(--font-mono); font-size: .72rem; margin-top: .4rem; }
 .admin__tools { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .admin__stats { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); }
@@ -410,6 +412,6 @@ tbody tr:hover { background: color-mix(in srgb, var(--color-line) 35%, transpare
 .avail--free { color: var(--color-ok); }
 
 @media (max-width: 760px) {
-  .admin { padding: 1.1rem; }
+  .admin { padding-top: calc(var(--header-h) + 1.4rem); }
   .admin__tools { width: 100%; }
 }

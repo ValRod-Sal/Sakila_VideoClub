@@ -25,7 +25,14 @@ Si tienes una base de datos de una versión anterior, ejecuta `npm run db:reset`
 | Socio | andres.choque@ucb.edu.bo | Sakila2026 |
 | Administrador | admin@clubsakila.bo | Admin2026 |
 
-También puedes crear una cuenta nueva desde “Crear cuenta”. El socio ve solo su propia cuenta; el administrador puede ver la de cualquier socio, registrar socios y cambiar las portadas.
+También puedes crear una cuenta nueva desde “Crear cuenta”. El socio ve la tienda (tira de discos, catálogo, carrito y su propia cuenta).
+
+El administrador no ve la tienda: entra directo al **mostrador del club**, con
+- **Préstamos activos**: quién tiene cada disco, hasta cuándo y cuánto tiempo le queda (o hace cuánto venció), con la multa acumulada y un botón para registrar la devolución.
+- **Historial** de todos los alquileres, filtrable por estado.
+- **Discos**: quién tiene cada película, cuántas veces se alquiló e ingresos; desde aquí se abre la ficha para cambiar la portada.
+- **Socios**: préstamos, vencidos y multas de cada socio, y el formulario para registrar socios nuevos.
+- Tarjetas de resumen, búsqueda y exportación del historial a CSV.
 
 ### Portadas de los discos (Wikipedia + TMDB opcional)
 Las portadas de los CDs se buscan solas en internet; **no hace falta configurar nada**:

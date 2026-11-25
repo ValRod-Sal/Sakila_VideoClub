@@ -277,17 +277,8 @@ async function confirmarAlquiler() {
   }
 }
 
-async function verCuentaDe(id) {
-  state.socioId = id;
-  store.set('socio-admin', state.socioId);
-  renderSocios();
-  renderCart();
-  await loadSocio();
-}
-
 async function loadSocio() {
   if (!state.socioId) return;
-  admin?.refrescar();
   const [alquileres, favoritos] = await Promise.all([api.alquileres(state.socioId), api.favoritos(state.socioId)]);
   state.alquileres = alquileres;
   state.favs = new Set(favoritos.map(Number));
@@ -347,18 +338,8 @@ async function toggleFav(id) {
 }
 
 function renderSocios() {
-  const admin = state.user?.rol === 'admin';
-  $('#socioPick').hidden = !admin;
-  $('#newSocio').hidden = !admin;
-  if (admin) {
-    $('#socioSel').innerHTML = state.socios.map(s =>
-      `<option value="${s.socio_id}">${esc(s.nombre)}${s.rol === 'admin' ? ' (admin)' : ''}</option>`).join('');
-    $('#socioSel').value = state.socioId ?? '';
-  }
-  const s = state.socios.find(x => x.socio_id === state.socioId);
-  $('#socioInfo').innerHTML = s
-    ? `<strong>${esc(s.nombre)}</strong><span class="muted">${esc(s.email)}${admin && s.socio_id !== state.user.socio_id ? ' · viendo como administrador' : ''}</span>`
-    : '';
+  const s = state.user;
+  $('#socioInfo').innerHTML = s ? `<strong>${esc(s.nombre)}</strong><span class="muted">${esc(s.email)}</span>` : '';
 }
 
 function renderUser() {
@@ -387,6 +368,7 @@ function setPortada(id, url) {
   state.lista.forEach(upd);
   upd(state.detail);
   if (state.detail?.pelicula_id === id) $('#dDiscFront').innerHTML = discHTML(state.detail, { lazy: false });
+  if (admin) return admin.render();
   strip.setFilms(state.lista, Math.max(0, strip.activeIndex));
   renderCatalogo();
   renderCart();
@@ -413,8 +395,28 @@ async function quitarPortada() {
   toast(r.portada ? 'Portada restablecida: se buscará de nuevo el póster.' : 'Portada quitada: el disco usa sus colores.');
 }
 
-function bindEvents() {
+// Eventos que usan las dos vistas: tema, menú de usuario, ficha (portadas) y diálogos.
+function bindComunes() {
   $('#themeBtn').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+  $('#dDisc').addEventListener('click', () => $('#dDisc').classList.toggle('is-flipped'));
+  $('#detailDlg').addEventListener('close', () => { $('#dTrailer').innerHTML = ''; });
+  $('#trailerDlg').addEventListener('close', () => { $('#tStage').innerHTML = ''; });
+  $('#userBtn').addEventListener('click', e => { e.stopPropagation(); toggleUserMenu(); });
+  $('#userMenuCuenta').addEventListener('click', () => toggleUserMenu(false));
+  $('#logoutBtn').addEventListener('click', logout);
+  document.addEventListener('click', e => { if (!e.target.closest('.user-wrap')) toggleUserMenu(false); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#userMenu').hidden) { toggleUserMenu(false); $('#userBtn').focus(); }
+  });
+  $('#coverFile').addEventListener('change', guard(e => subirPortada(e.target.files[0])));
+  $('#coverReset').addEventListener('click', guard(quitarPortada));
+  $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+  onModeChange(m => { $('#demoBanner').hidden = m !== 'demo'; });
+  $('#demoReset').addEventListener('click', () => { resetDemo(); location.reload(); });
+}
+
+// Eventos de la vista de socio: tira, catálogo, carrito y cuenta.
+function bindEvents() {
   $('#cartBtn').addEventListener('click', () => { renderCart(); $('#cartDlg').showModal(); });
   $('#searchBtn').addEventListener('click', () => {
     $('#catalogo').scrollIntoView();
@@ -467,7 +469,6 @@ function bindEvents() {
   grid.addEventListener('mouseover', hint);
   grid.addEventListener('focusin', hint);
 
-  $('#dDisc').addEventListener('click', () => $('#dDisc').classList.toggle('is-flipped'));
   $('#dDias').addEventListener('input', updateSubtotal);
   $('#dDias').addEventListener('change', () => { $('#dDias').value = clampDias($('#dDias').value); updateSubtotal(); });
   $('#dAdd').addEventListener('click', () => {
@@ -475,8 +476,6 @@ function bindEvents() {
     $('#detailDlg').close();
   });
   $('#dFav').addEventListener('click', guard(() => toggleFav(state.detail.pelicula_id)));
-  $('#detailDlg').addEventListener('close', () => { $('#dTrailer').innerHTML = ''; });
-  $('#trailerDlg').addEventListener('close', () => { $('#tStage').innerHTML = ''; });
 
   const cartList = $('#cartList');
   cartList.addEventListener('change', e => {
@@ -495,16 +494,6 @@ function bindEvents() {
   $('#cartClear').addEventListener('click', () => { state.cart = []; renderCart(); });
   $('#cartPay').addEventListener('click', guard(confirmarAlquiler));
 
-  $('#socioSel').addEventListener('change', guard(e => verCuentaDe(Number(e.target.value))));
-  $('#userBtn').addEventListener('click', e => { e.stopPropagation(); toggleUserMenu(); });
-  $('#userMenuCuenta').addEventListener('click', () => toggleUserMenu(false));
-  $('#logoutBtn').addEventListener('click', logout);
-  document.addEventListener('click', e => { if (!e.target.closest('.user-wrap')) toggleUserMenu(false); });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && !$('#userMenu').hidden) { toggleUserMenu(false); $('#userBtn').focus(); }
-  });
-  $('#coverFile').addEventListener('change', guard(e => subirPortada(e.target.files[0])));
-  $('#coverReset').addEventListener('click', guard(quitarPortada));
   $('#rentalsBody').addEventListener('click', guard(async e => {
     const b = e.target.closest('[data-return]');
     if (!b) return;
@@ -521,50 +510,72 @@ function bindEvents() {
     if (b.dataset.action === 'add') addToCart(id);
     if (b.dataset.action === 'fav') await toggleFav(id);
   }));
-  $('#socioForm').addEventListener('submit', guard(async e => {
-    e.preventDefault();
-    const f = e.target;
-    const fd = new FormData(f);
-    const nuevo = await api.crearSocio({ nombre: fd.get('nombre').trim(), email: fd.get('email').trim(), password: fd.get('password') });
-    state.socios = await api.socios();
-    state.socioId = nuevo.socio_id;
-    store.set('socio-admin', state.socioId);
-    renderSocios();
-    f.reset();
-    $('#newSocio').open = false;
-    renderCart();
-    await loadSocio();
-    toast(`Socio registrado: ${nuevo.nombre}. Ya puede iniciar sesión con su correo.`);
-  }));
-
-  $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
 
   const links = $$('.nav-link[data-nav]');
   const io = new IntersectionObserver(entries => entries.forEach(en => {
     if (en.isIntersecting) links.forEach(l => l.classList.toggle('is-active', l.dataset.nav === en.target.id));
   }), { rootMargin: '-45% 0px -50% 0px' });
   ['discos', 'catalogo', 'socio'].forEach(id => io.observe(document.getElementById(id)));
-
-  onModeChange(m => { $('#demoBanner').hidden = m !== 'demo'; });
-  $('#demoReset').addEventListener('click', () => { resetDemo(); location.reload(); });
 }
 
-function initAdmin() {
+// Vista del administrador: no ve la tienda (tira, catálogo, carrito, favoritos),
+// solo el mostrador con préstamos, historial, discos y socios.
+async function initAdmin() {
   admin = createAdminPanel({
     toast,
     getPeliculas: () => state.todas,
     getSocios: () => state.socios,
-    onCambio: loadSocio,
-    onVerCuenta: guard(async id => {
-      await verCuentaDe(id);
-      $('#socio').scrollIntoView();
-    })
+    onAbrirDisco: guard(id => openDetail(id))
   });
-  const abrir = () => { toggleUserMenu(false); admin.abrir(); };
-  $('#adminNav').hidden = false;
-  $('#userMenuAdmin').hidden = false;
-  $('#adminNav').addEventListener('click', abrir);
-  $('#userMenuAdmin').addEventListener('click', abrir);
+  $('#socioForm').addEventListener('submit', guard(async e => {
+    e.preventDefault();
+    const f = e.target;
+    const fd = new FormData(f);
+    const nuevo = await api.crearSocio({ nombre: fd.get('nombre').trim(), email: fd.get('email').trim(), password: fd.get('password') });
+    state.socios = await api.socios();
+    f.reset();
+    $('#newSocio').open = false;
+    admin.render();
+    toast(`Socio registrado: ${nuevo.nombre}. Ya puede iniciar sesión con su correo.`);
+  }));
+  try {
+    const [todas, socios] = await Promise.all([api.peliculas(), api.socios()]);
+    state.todas = todas;
+    state.lista = todas;
+    state.socios = socios;
+    await admin.iniciar();
+  } catch (e) {
+    admin.error(e.message);
+  }
+}
+
+async function initSocio() {
+  strip = new DiscStripGallery({
+    stageEl: $('#discStage'),
+    trackEl: $('#discTrack'),
+    keyTarget: $('#discos'),
+    onActiveChange: renderHero,
+    onDiscOpen: guard(p => openDetail(p.pelicula_id))
+  });
+  bindEvents();
+  try {
+    const [todas, categorias] = await Promise.all([api.peliculas(), api.categorias()]);
+    state.todas = todas;
+    state.socios = [state.user];
+    state.socioId = state.user.socio_id;
+    const guardado = store.get(`cart:${state.user.socio_id}`, []);
+    state.cart = (Array.isArray(guardado) ? guardado : [])
+      .filter(i => Number.isInteger(i?.id))
+      .map(i => ({ id: i.id, dias: clampDias(i.dias) }));
+    $('#fCategoria').insertAdjacentHTML('beforeend', categorias.map(c => `<option>${esc(c)}</option>`).join(''));
+    renderSocios();
+    renderCart();
+    await applyFilters();
+    await loadSocio();
+  } catch (e) {
+    $('#hTitle').textContent = 'Sin conexión';
+    $('#discGrid').innerHTML = `<li class="empty">No se pudo cargar el catálogo. Inicia el servidor con <code>npm start</code> y entra a http://localhost:3000. (${esc(e.message)})</li>`;
+  }
 }
 
 async function init() {
@@ -576,40 +587,12 @@ async function init() {
     location.replace('login.html');
     return;
   }
+  const esAdmin = state.user.rol === 'admin';
+  document.body.classList.toggle('is-admin', esAdmin);
   document.body.classList.add('is-ready');
   setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
   renderUser();
-  strip = new DiscStripGallery({
-    stageEl: $('#discStage'),
-    trackEl: $('#discTrack'),
-    keyTarget: $('#discos'),
-    onActiveChange: renderHero,
-    onDiscOpen: guard(p => openDetail(p.pelicula_id))
-  });
-  bindEvents();
-  try {
-    const esAdmin = state.user.rol === 'admin';
-    const [todas, categorias, socios] = await Promise.all([api.peliculas(), api.categorias(), esAdmin ? api.socios() : [state.user]]);
-    state.todas = todas;
-    state.socios = socios;
-    const guardado = store.get(`cart:${state.user.socio_id}`, []);
-    state.cart = (Array.isArray(guardado) ? guardado : [])
-      .filter(i => Number.isInteger(i?.id))
-      .map(i => ({ id: i.id, dias: clampDias(i.dias) }));
-    $('#fCategoria').insertAdjacentHTML('beforeend', categorias.map(c => `<option>${esc(c)}</option>`).join(''));
-    const elegido = esAdmin ? Number(store.get('socio-admin', 0)) : 0;
-    state.socioId = socios.some(s => s.socio_id === elegido) ? elegido : state.user.socio_id;
-    renderSocios();
-    renderCart();
-    await applyFilters();
-    if (esAdmin) {
-      initAdmin();
-      admin.precargar();
-    }
-    await loadSocio();
-  } catch (e) {
-    $('#hTitle').textContent = 'Sin conexión';
-    $('#discGrid').innerHTML = `<li class="empty">No se pudo cargar el catálogo. Inicia el servidor con <code>npm start</code> y entra a http://localhost:3000. (${esc(e.message)})</li>`;
-  }
+  bindComunes();
+  await (esAdmin ? initAdmin() : initSocio());
 }
 init();

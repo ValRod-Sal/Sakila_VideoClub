@@ -1,8 +1,8 @@
 import { api } from './api.js';
 import { esc, bs, discHTML } from './disc.js';
 
-// Panel de administración: préstamos activos con cuenta regresiva, historial,
-// disponibilidad de discos y resumen por socio. Solo se muestra a administradores.
+// Mostrador del administrador (su página principal): préstamos activos con cuenta
+// regresiva, historial, disponibilidad de discos y resumen por socio.
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -31,8 +31,8 @@ function cuentaRegresiva(a, ahora) {
   return { clase: resta < DIA ? 'countdown--soon' : '', texto: `Quedan ${duracion(resta)}`, p };
 }
 
-export function createAdminPanel({ toast, getPeliculas, getSocios, onCambio, onVerCuenta }) {
-  const dlg = $('#adminDlg');
+export function createAdminPanel({ toast, getPeliculas, getSocios, onAbrirDisco }) {
+  const raiz = $('#admin');
   let alquileres = [];
   let tab = 'prestamos';
   let reloj = null;
@@ -124,7 +124,8 @@ export function createAdminPanel({ toast, getPeliculas, getSocios, onCambio, onV
         <td>${veces}</td>
         <td><span class="pop-bar" role="img" aria-label="${veces} de ${max}"><span style="--p:${(veces / max * 100).toFixed(1)}%"></span></span></td>
         <td>${bs(ingresos)}</td>
-      </tr>`).join('') : '<tr><td colspan="5" class="empty">Ningún disco coincide con la búsqueda.</td></tr>';
+        <td><button class="btn btn--ghost btn--sm" type="button" data-abrir-disco="${p.pelicula_id}">Ficha y portada</button></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty">Ningún disco coincide con la búsqueda.</td></tr>';
     return stats.length;
   }
 
@@ -148,7 +149,7 @@ export function createAdminPanel({ toast, getPeliculas, getSocios, onCambio, onV
         <td>${x.vencidos ? `<span class="badge badge--late">${x.vencidos}</span>` : '0'}</td>
         <td>${x.multas ? `<strong class="text-alert">${bs(x.multas)}</strong>` : '—'}</td>
         <td>${bs(x.gastado)}</td>
-        <td><button class="btn btn--ghost btn--sm" type="button" data-ver-socio="${x.s.socio_id}">Ver cuenta</button></td>
+        <td><button class="btn btn--ghost btn--sm" type="button" data-ver-socio="${esc(x.s.email)}">Ver alquileres</button></td>
       </tr>`).join('') : '<tr><td colspan="8" class="empty">Ningún socio coincide con la búsqueda.</td></tr>';
     return filas.length;
   }
@@ -171,6 +172,7 @@ export function createAdminPanel({ toast, getPeliculas, getSocios, onCambio, onV
       if (on && enfocar) b.focus();
     });
     $('#adminEstadoField').hidden = nombre !== 'historial';
+    $$('[data-admin-tab]').forEach(b => b.classList.toggle('is-active', b.dataset.adminTab === nombre));
   }
 
   async function cargar() {
@@ -179,13 +181,18 @@ export function createAdminPanel({ toast, getPeliculas, getSocios, onCambio, onV
     render();
   }
 
-  async function abrir() {
+  async function iniciar() {
+    $('#adminHoy').textContent = new Date().toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' });
     mostrarTab(tab);
-    if (!dlg.open) dlg.showModal();
     $('#adminUpdated').textContent = 'Cargando…';
-    try { await cargar(); } catch (e) { toast(e.message); }
+    await cargar();
     clearInterval(reloj);
     reloj = setInterval(render, 30_000);
+  }
+
+  function error(msg) {
+    $('#adminUpdated').textContent = '';
+    $('#adminPrestamos').innerHTML = `<tr><td colspan="7" class="empty">No se pudo cargar el mostrador. Inicia el servidor con <code>npm start</code>. (${esc(msg)})</td></tr>`;
   }
 
   function exportarCsv() {
@@ -216,27 +223,32 @@ export function createAdminPanel({ toast, getPeliculas, getSocios, onCambio, onV
     try { await cargar(); toast('Panel actualizado.'); } catch (e) { toast(e.message); }
   });
   $('#adminCsv').addEventListener('click', exportarCsv);
-  dlg.addEventListener('close', () => { clearInterval(reloj); reloj = null; });
-  dlg.addEventListener('click', async e => {
+  $$('[data-admin-tab]').forEach(b => b.addEventListener('click', () => {
+    mostrarTab(b.dataset.adminTab);
+    raiz.scrollIntoView({ behavior: 'smooth' });
+  }));
+  raiz.addEventListener('click', async e => {
     const dev = e.target.closest('[data-devolver]');
     if (dev) {
       dev.disabled = true;
       try {
         const r = await api.devolver(Number(dev.dataset.socio), Number(dev.dataset.devolver));
         await cargar();
-        await onCambio?.();
         toast(Number(r.multa) ? `Devolución de “${r.titulo}” registrada con multa de ${bs(r.multa)}.` : `Devolución de “${r.titulo}” registrada a tiempo.`);
       } catch (err) { dev.disabled = false; toast(err.message); }
       return;
     }
     const ver = e.target.closest('[data-ver-socio]');
-    if (ver) { dlg.close(); onVerCuenta?.(Number(ver.dataset.verSocio)); }
+    if (ver) {
+      $('#adminQ').value = ver.dataset.verSocio;
+      $('#adminEstado').value = '';
+      mostrarTab('historial', true);
+      render();
+      return;
+    }
+    const disco = e.target.closest('[data-abrir-disco]');
+    if (disco) onAbrirDisco?.(Number(disco.dataset.abrirDisco));
   });
 
-  return {
-    abrir,
-    // Carga silenciosa al iniciar para marcar en el menú si hay préstamos vencidos.
-    async precargar() { try { await cargar(); } catch { } },
-    refrescar: () => (dlg.open || alquileres.length ? cargar().catch(() => { }) : null)
-  };
+  return { iniciar, render, error, mostrarTab };
 }
