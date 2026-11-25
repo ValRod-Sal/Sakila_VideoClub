@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Club Sakila · Videoclub de discos</title>
-  <meta name="description" content="Explora y alquila películas en formato disco: tira 3D interactiva, ficha con tráiler, carrito y cuenta de socio. Proyecto SIS-214.">
+  <meta name="description" content="Explora y alquila películas en formato disco: tira 3D interactiva, ficha con tráiler, carrito y cuenta de socio.">
   <meta name="theme-color" content="#f2f2f2">
   <link rel="icon" href="assets/icons/disc.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,7 +71,7 @@
     </nav>
 
     <div class="actions">
-      <button type="button" class="pill-btn solo-socio" id="searchBtn" title="Buscar y filtrar (RF-01)">
+      <button type="button" class="pill-btn solo-socio" id="searchBtn" title="Buscar y filtrar">
         Buscar <span class="pill-btn__dot" id="filterDot" hidden></span>
       </button>
       <button type="button" class="pill-btn" id="themeBtn" aria-label="Cambiar entre tema claro y oscuro">Cine noche</button>
@@ -144,7 +144,7 @@
 
     <section id="catalogo" class="catalog-section container solo-socio" aria-labelledby="catTitle">
       <div class="section-head">
-        <p class="eyebrow">Exploración completa · RF-01 y RF-02</p>
+        <p class="eyebrow">Exploración completa</p>
         <h2 id="catTitle" class="section-title">Catálogo de discos</h2>
       </div>
 
@@ -181,7 +181,7 @@
     <section id="socio" class="socio container solo-socio" aria-labelledby="socioTitle">
       <div class="socio__head">
         <div class="section-head">
-          <p class="eyebrow">Gestión de cuenta · RF-04</p>
+          <p class="eyebrow">Gestión de cuenta</p>
           <h2 id="socioTitle" class="section-title">Mi cuenta de socio</h2>
         </div>
         <p class="socio__who" id="socioInfo"></p>
@@ -201,7 +201,7 @@
               <tbody id="rentalsBody"></tbody>
             </table>
           </div>
-          <p class="muted table-note">La multa es simulada: Bs 2.00 por cada día de atraso.</p>
+          <p class="muted table-note">La multa por cada día de retraso es de Bs 2.00.</p>
         </article>
         <article>
           <h3>Lista de favoritos</h3>
@@ -302,12 +302,6 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>Club Sakila · Tecnologías Web I (SIS-214) · Universidad Católica Boliviana “San Pablo”</p>
-    <p>Proyecto académico. Títulos, portadas y tráileres pertenecen a sus respectivos dueños.</p>
-    <p class="tmdb-credit">Portadas: <a href="https://www.themoviedb.org/" rel="noopener" target="_blank">TMDB</a>. Este producto usa la API de TMDB, pero no está avalado ni certificado por TMDB.</p>
-  </footer>
-
   <dialog id="detailDlg" aria-labelledby="dTitle">
     <form method="dialog"><button class="icon-btn dlg-close" aria-label="Cerrar ficha">✕</button></form>
     <div class="detail">
@@ -371,7 +365,7 @@
     <div class="cart">
       <header class="cart__head">
         <div>
-          <p class="eyebrow">Reserva y préstamo · RF-03</p>
+          <p class="eyebrow">Reserva y préstamo</p>
           <h2 id="cartTitle">Tu carrito</h2>
         </div>
         <form method="dialog"><button class="icon-btn" aria-label="Cerrar carrito">✕</button></form>

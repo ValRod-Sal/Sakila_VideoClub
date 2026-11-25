@@ -23,7 +23,7 @@
 
 ## HU-04 · Seguir mis alquileres y multas (RF-04)
 **Como:** Socio · **Quiero:** ver mi historial, lo pendiente y mis multas · **Para:** devolver a tiempo.
-- **Dado que** el socio tiene un alquiler vencido, **cuando** abre “Mi cuenta”, **entonces** ve el estado “Vencido” y una multa de Bs 2.00 por cada día de atraso.
+- **Dado que** el socio tiene un alquiler vencido, **cuando** abre “Mi cuenta”, **entonces** ve el estado “Vencido” y una multa de Bs 2.00 por cada día de retraso.
 - **Dado que** tiene un alquiler pendiente, **cuando** pulsa “Devolver”, **entonces** el sistema llama a `PATCH .../devolucion` y el estado pasa a “Devuelto”.
 
 ## HU-05 · Gestionar favoritos (RF-04)
@@ -32,8 +32,10 @@
 
 ## HU-06 · Registrarme como socio
 **Como:** Visitante · **Quiero:** crear mi cuenta de socio · **Para:** alquilar y guardar mi historial.
-- **Dado que** abre “Registrar nuevo socio”, **cuando** envía un nombre de menos de 3 letras o un correo inválido, **entonces** el navegador lo bloquea y marca el campo.
+- **Dado que** está en la pantalla de inicio de sesión, **cuando** abre la pestaña “Crear cuenta” y envía nombre, correo y contraseña válidos (repetida dos veces), **entonces** se crea su cuenta de socio y entra directamente.
+- **Dado que** envía un nombre de menos de 3 letras, un correo inválido o contraseñas que no coinciden, **cuando** pulsa “Crear cuenta y entrar”, **entonces** se muestra el error y el campo queda marcado.
 - **Dado que** el correo ya existe, **cuando** envía el formulario, **entonces** el servidor responde 409 y se muestra el mensaje “Ya existe un socio con ese correo.”
+- **Dado que** es administrador, **cuando** usa “Registrar nuevo socio” en la pestaña Socios del mostrador, **entonces** se crea la cuenta y el socio aparece en la lista; ya puede entrar con su correo.
 - **Validaciones:** `required`, `minlength`, `pattern` y `type="email"`, además de la validación del servidor.
 
 ## HU-07 · Cambiar entre tema claro y oscuro
@@ -62,7 +64,18 @@
 
 ## HU-11 · Ver la portada de cada película en su disco
 **Como:** Socio · **Quiero:** ver la portada de la película impresa en el disco · **Para:** reconocerla de un vistazo.
-- **Dado que** el servidor tiene configurada la clave de TMDB, **cuando** se muestra un disco, **entonces** su etiqueta lleva la portada de la película; la imagen se guarda en caché para las siguientes visitas.
+- **Dado que** el servidor está corriendo, **cuando** se muestra un disco, **entonces** su etiqueta lleva el póster de la película, que el servidor busca solo en Wikipedia (o primero en TMDB, si se configuró una clave) y guarda en caché para las siguientes visitas.
+- **Dado que** el servidor arranca, **cuando** faltan portadas en la caché, **entonces** las descarga en segundo plano.
 - **Dado que** no hay portada disponible, **cuando** se muestra el disco, **entonces** se dibuja con los colores de la película.
-- **Dado que** es administrador, **cuando** sube una imagen JPG, PNG o WebP de hasta 3 MB desde la ficha, **entonces** esa imagen reemplaza la portada en la tira, el catálogo y el carrito; “Restablecer” vuelve a la de TMDB.
+- **Dado que** es administrador, **cuando** sube una imagen JPG, PNG o WebP de hasta 3 MB desde la ficha (pestaña Discos → “Ficha y portada”), **entonces** esa imagen reemplaza la portada en todo el sitio; “Restablecer” la quita y vuelve a buscar el póster en internet.
 - **Validaciones:** se rechazan archivos que no sean imágenes reales (se revisa su contenido) o que superen 3 MB; un socio sin rol de administrador recibe 403.
+
+## HU-12 · Atender el mostrador del club (administrador)
+**Como:** Administrador · **Quiero:** ver quién tiene cada disco y cuánto tiempo le queda para devolverlo · **Para:** controlar los préstamos, cobrar multas y registrar devoluciones.
+- **Dado que** inicia sesión un administrador, **cuando** entra a la página, **entonces** ve directamente el mostrador; no ve la tira de discos, el catálogo, el carrito ni los favoritos.
+- **Dado que** está en “Préstamos activos”, **cuando** carga la lista, **entonces** ve cada disco prestado con el socio, la fecha de alquiler, la fecha límite y el tiempo para devolver (“Quedan 2 días 5 h” o “Vencido hace 3 días”), ordenados por urgencia y con la multa acumulada.
+- **Dado que** un préstamo vence en menos de 24 h o ya venció, **cuando** se muestra, **entonces** su barra cambia a amarillo o rojo; la cuenta se actualiza sola cada 30 segundos.
+- **Dado que** un socio devuelve un disco, **cuando** el administrador pulsa “Registrar devolución”, **entonces** el sistema llama a `PATCH .../devolucion` y el préstamo pasa al historial con su multa final.
+- **Dado que** abre “Historial”, “Discos” o “Socios”, **cuando** busca un socio o una película o filtra por estado, **entonces** ve todos los alquileres, la disponibilidad y popularidad de cada disco, o los préstamos, vencidos y multas de cada socio; “Ver alquileres” muestra el historial de ese socio.
+- **Dado que** necesita un respaldo, **cuando** pulsa “Exportar CSV”, **entonces** descarga el historial completo en un archivo que abre Excel.
+- **Validaciones:** `GET /api/admin/alquileres` responde 401 sin sesión y 403 a un socio; las devoluciones de cualquier socio solo las puede registrar un administrador o el propio socio.

@@ -1,6 +1,6 @@
-# Club Sakila: videoclub de discos (SIS-214, Proyecto 1)
+# Club Sakila: videoclub de discos
 
-Catálogo de películas presentado como discos: acceso con inicio de sesión, tira 3D interactiva, discos con la portada de cada película, catálogo con lector de discos, ficha con tráiler, carrito de alquiler y cuenta de socio con historial, multas y favoritos.
+Catálogo de películas presentado como discos: acceso con inicio de sesión, tira 3D interactiva, discos con la portada de cada película, catálogo con lector de discos, ficha con tráiler, carrito de alquiler y cuenta de socio con historial, multas y favoritos. El administrador tiene su propia vista: el mostrador del club, con los préstamos activos y el tiempo que queda para devolver cada disco.
 
 HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones 3D) · JavaScript ES6+ (módulos, Fetch API) · API REST en Node.js · SQLite.
 
@@ -17,7 +17,9 @@ Si tienes una base de datos de una versión anterior, ejecuta `npm run db:reset`
    ```
 3. Abre http://localhost:3000. Primero aparece la pantalla de inicio de sesión.
 
-### Cuentas de prueba
+### Cuentas para probar
+La pantalla de inicio de sesión no muestra cuentas; usa estas:
+
 | Rol | Correo | Contraseña |
 |---|---|---|
 | Socio | carlos.mamani@ucb.edu.bo | Sakila2026 |
@@ -75,7 +77,10 @@ Abrir `index.html` con doble clic (`file://`) no funciona: los navegadores bloqu
 | RF-01 Buscar y filtrar | Búsqueda en vivo por título, director o reparto (sin distinguir mayúsculas ni tildes) + categoría + clasificación. El filtro afecta a la tira 3D, al índice y al catálogo. |
 | RF-02 Ficha | Ventana `<dialog>` con sinopsis, dirección, reparto, tarifa, subtotal según días y tráiler. El disco se voltea con un clic. Tráiler a pantalla completa desde la tira. |
 | RF-03 Carrito | Días de 1 a 14, total en vivo, persistencia en `localStorage`. El servidor recalcula los precios con la tarifa de la base. |
-| RF-04 Cuenta | Historial con estado (En curso / Vencido / Devuelto), multa simulada de Bs 2.00 por día de atraso, devoluciones, favoritos y registro de socios. |
+| RF-04 Cuenta | Historial con estado (En curso / Vencido / Devuelto), multa de Bs 2.00 por cada día de retraso, devoluciones y favoritos. |
+| Registro y acceso | Inicio de sesión y “Crear cuenta” en `login.html`; el administrador también registra socios desde el mostrador. |
+| Mostrador (admin) | Préstamos activos con cuenta regresiva y devolución, historial filtrable, disponibilidad y popularidad por disco, resumen por socio, búsqueda y exportación a CSV. |
+| Portadas | Póster de cada película en su disco (Wikipedia sin clave, TMDB opcional, o imagen subida por el administrador). |
 | Tema | Claro (editorial) y oscuro (“Cine noche”), recordado entre visitas y respetando la preferencia del sistema. |
 
 **Tira 3D:** rueda del ratón (un disco por clic; continuo en trackpad), arrastre, flechas ← →, Inicio/Fin, **Espacio** voltea el disco y **Enter** abre la ficha. Respeta `prefers-reduced-motion`.
@@ -87,15 +92,16 @@ Abrir `index.html` con doble clic (`file://`) no funciona: los navegadores bloqu
 | POST | `/api/auth/registro` | Crea una cuenta de socio e inicia sesión |
 | POST | `/api/auth/logout` | Cierra la sesión |
 | GET | `/api/auth/sesion` | Usuario de la sesión actual (401 si no hay) |
-| GET | `/api/portadas/:id` | Imagen de la portada (subida, en caché o desde TMDB); 404 si no hay |
+| GET | `/api/portadas/:id` | Imagen de la portada (subida, en caché o descargada de TMDB o Wikipedia); 404 si no hay |
 | PUT | `/api/portadas/:id` | **Admin.** Sube una portada (cuerpo: la imagen JPG, PNG o WebP) |
-| DELETE | `/api/portadas/:id` | **Admin.** Quita la portada subida y la caché; vuelve a TMDB |
+| DELETE | `/api/portadas/:id` | **Admin.** Quita la portada subida y la caché; se vuelve a buscar en internet |
 | GET | `/api/peliculas?q=&categoria=&clasificacion=` | Catálogo con filtros; `q` busca en título, director y reparto |
 | GET | `/api/peliculas/:id` | Ficha de una película |
 | GET | `/api/categorias` | Lista de categorías |
 | GET / POST | `/api/socios` | **Admin.** Listar o registrar socios (409 si el correo ya existe) |
+| GET | `/api/admin/alquileres` | **Admin.** Todos los alquileres con socio, estado y multa (para el mostrador) |
 | GET / POST | `/api/socios/:id/alquileres` | Historial (con estado y multa) / confirmar un carrito |
-| PATCH | `/api/socios/:id/alquileres/:aid/devolucion` | Registrar devolución |
+| PATCH | `/api/socios/:id/alquileres/:aid/devolucion` | Registrar devolución (el propio socio o un administrador) |
 | GET | `/api/socios/:id/favoritos` | Ids de favoritos |
 | PUT / DELETE | `/api/socios/:id/favoritos/:pid` | Agregar / quitar favorito |
 
@@ -103,20 +109,21 @@ Abrir `index.html` con doble clic (`file://`) no funciona: los navegadores bloqu
 ```
 index.html, login.html
 css/       variables, base, layout, components, auth, styles (@import)
-js/        main.js (interfaz), login.js (acceso), disc-strip.js (tira 3D), disc.js (disco y utilidades),
-           api.js (cliente Fetch + modo demostración), demo-data.js (generado)
-server/    server.js (API + archivos estáticos), auth.js (contraseñas y sesiones), portadas.js (TMDB y subidas),
-           db.js, env.js, reset-db.js, build-demo-data.js
-database/  schema.sql, seed.sql, portadas/ (subidas del admin), cache/ (portadas de TMDB)
+js/        main.js (interfaz y arranque según el rol), admin.js (mostrador del administrador), login.js (acceso),
+           disc-strip.js (tira 3D), disc.js (disco y utilidades), api.js (cliente Fetch + modo demostración),
+           demo-data.js (generado)
+server/    server.js (API + archivos estáticos), auth.js (contraseñas y sesiones),
+           portadas.js (Wikipedia, TMDB y subidas), db.js (conexión y migraciones), env.js, reset-db.js,
+           build-demo-data.js
+database/  schema.sql, seed.sql, migraciones/ (cambios para bases ya creadas),
+           portadas/ (subidas del admin), cache/ (portadas descargadas)
 docs/      historias-de-usuario.md
 assets/    icons/disc.svg
 ```
 
 ## Datos
-Catálogo de 14 películas de A24 (dirección, reparto, duración, clasificación y enlace de tráiler de YouTube). Cada disco muestra la portada de la película (TMDB o subida por el administrador); si no hay, se dibuja con CSS a partir de dos colores (`color1`, `color2`). Para cambiar el catálogo edita `database/seed.sql` y ejecuta `npm run db:reset` y `npm run demo:build`.
+Catálogo de 14 películas de A24 (dirección, reparto, duración, clasificación y enlace de tráiler de YouTube). Cada disco muestra la portada de la película (Wikipedia, TMDB o subida por el administrador); si no hay, se dibuja con CSS a partir de dos colores (`color1`, `color2`). Para cambiar el catálogo edita `database/seed.sql` y ejecuta `npm run db:reset` y `npm run demo:build`.
 
 ## Despliegue
-GitHub Pages solo sirve archivos estáticos: ahí la página funcionará en modo demostración. Para usar la base de datos real usa **Render**: crea un *Web Service* desde el repositorio (el archivo `render.yaml` ya trae la configuración). Agrega `TMDB_TOKEN` en *Environment* para las portadas. En el plan gratuito el disco es temporal: la base, las portadas subidas y la caché vuelven a empezar cuando el servicio se reinicia.
+GitHub Pages solo sirve archivos estáticos: ahí la página funcionará en modo demostración. Para usar la base de datos real usa **Render**: crea un *Web Service* desde el repositorio (el archivo `render.yaml` ya trae la configuración). Las portadas funcionan sin configurar nada (Wikipedia); si quieres usar TMDB primero, agrega `TMDB_TOKEN` en *Environment*. En el plan gratuito el disco es temporal: la base, las portadas subidas y la caché vuelven a empezar cuando el servicio se reinicia.
 
----
-Proyecto académico sin fines comerciales. Los títulos, portadas y tráileres pertenecen a sus respectivos dueños. Este producto usa la API de TMDB, pero no está avalado ni certificado por TMDB.

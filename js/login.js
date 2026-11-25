@@ -92,14 +92,6 @@ function init() {
     b.setAttribute('aria-pressed', String(ver));
     b.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
   }));
-  $$('[data-demo]').forEach(b => b.addEventListener('click', () => {
-    const [email, password] = b.dataset.demo.split('|');
-    mostrar('login');
-    const f = $('#loginForm');
-    f.elements.email.value = email;
-    f.elements.password.value = password;
-    f.querySelector('.auth__submit').focus();
-  }));
   $('#loginForm').addEventListener('submit', e => { e.preventDefault(); enviar(e.target, 'login'); });
   $('#registroForm').addEventListener('submit', e => { e.preventDefault(); enviar(e.target, 'registro'); });
 

@@ -300,7 +300,7 @@ function renderSocio() {
     <div class="stat"><strong>${a.length}</strong><span>Alquileres en total</span></div>
     <div class="stat"><strong>${activos}</strong><span>Discos en préstamo</span></div>
     <div class="stat ${vencidos ? 'stat--alert' : ''}"><strong>${vencidos}</strong><span>Préstamos vencidos</span></div>
-    <div class="stat ${multas ? 'stat--alert' : ''}"><strong>${bs(multas)}</strong><span>Multas simuladas</span></div>
+    <div class="stat ${multas ? 'stat--alert' : ''}"><strong>${bs(multas)}</strong><span>Multas por atraso</span></div>
     <div class="stat"><strong>${bs(gastado)}</strong><span>Total en alquileres</span></div>`;
 
   $('#rentalsBody').innerHTML = a.length ? a.map(x => `

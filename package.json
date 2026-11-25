@@ -2,7 +2,7 @@
   "name": "club-sakila",
   "version": "4.0.0",
   "private": true,
-  "description": "Club de videos Sakila: tira 3D de discos, catálogo, carrito y cuenta de socio (SIS-214, Proyecto 1)",
+  "description": "Club de videos Sakila: tira 3D de discos, catálogo, carrito y cuenta de socio",
   "main": "server/server.js",
   "engines": {
     "node": ">=22.13"

@@ -311,7 +311,7 @@ tbody tr:hover { background: color-mix(in srgb, var(--color-line) 35%, transpare
   .wishlist li { flex-wrap: wrap; }
 }
 
-.app:not(.is-ready) main, .app:not(.is-ready) .site-header, .app:not(.is-ready) .site-footer { visibility: hidden; }
+.app:not(.is-ready) main, .app:not(.is-ready) .site-header { visibility: hidden; }
 
 .user-wrap { position: relative; }
 .user-btn { padding-left: .35rem; }
@@ -341,8 +341,6 @@ tbody tr:hover { background: color-mix(in srgb, var(--color-line) 35%, transpare
 .cover-admin__note { font-size: .74rem; }
 .cover-admin.is-busy { opacity: .55; pointer-events: none; }
 .cover-admin.is-disabled .cover-admin__upload { opacity: .4; cursor: not-allowed; }
-.tmdb-credit { flex-basis: 100%; font-size: .74rem; }
-.tmdb-credit a { text-decoration: underline; }
 
 @media (max-width: 960px) {
   .socio__who { text-align: left; }
