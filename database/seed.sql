@@ -21,7 +21,8 @@ INSERT INTO pelicula (pelicula_id, titulo, director, sinopsis, anio, duracion, c
  (11, 'Lady Bird', 'Greta Gerwig', 'En el año 2002, una joven de diecisiete años con inclinaciones artísticas navega por el amor, la amistad y el turbulento vínculo con su obstinada madre durante su último año de secundaria en Sacramento.', 2017, 94, 'R', 3.50, '#b85d6f', '#2e141a', 'https://www.youtube-nocookie.com/embed/cNi_HC839Wo', 4),
  (12, 'Ex Machina', 'Alex Garland', 'Un joven programador es seleccionado para participar en un innovador experimento de inteligencia sintética evaluando las cualidades humanas de Ava, una asombrosa humanoide con inteligencia artificial.', 2015, 108, 'R', 3.50, '#587b8c', '#101a21', 'https://www.youtube-nocookie.com/embed/sNExF5WYMaA', 3),
  (13, 'After Yang', 'Kogonada', 'Cuando el compañero robótico de su pequeña hija sufre una avería inesperada, un padre busca una manera de repararlo y descubre los recuerdos secretos que el androide guardaba sobre la vida y la memoria.', 2022, 96, 'PG', 3.50, '#6b8c6e', '#1a261b', 'https://www.youtube-nocookie.com/embed/Kwp32zLc08c', 3),
- (14, 'Marcel the Shell with Shoes On', 'Dean Fleischer Camp', 'Marcel, una adorable caracola de una pulgada de altura que vive con su abuela Connie, se vuelve viral en un documental que le abre la esperanza de reencontrar a su familia perdida.', 2022, 90, 'PG', 3.50, '#c99b52', '#2d200d', 'https://www.youtube-nocookie.com/embed/k98Afd7Nf3Y', 4);
+ (14, 'Marcel the Shell with Shoes On', 'Dean Fleischer Camp', 'Marcel, una adorable caracola de una pulgada de altura que vive con su abuela Connie, se vuelve viral en un documental que le abre la esperanza de reencontrar a su familia perdida.', 2022, 90, 'PG', 3.50, '#c99b52', '#2d200d', 'https://www.youtube-nocookie.com/embed/k98Afd7Nf3Y', 4),
+ (15, 'Toy Story 4', 'Josh Cooley', 'Cuando Bonnie convierte un tenedor de plástico en su juguete favorito, Woody emprende un viaje por carretera para cuidarlo y se reencuentra con Bo Peep, quien le muestra que el mundo es mucho más grande de lo que imaginaba.', 2019, 100, 'G', 3.50, '#4a90c8', '#132a40', 'https://www.youtube-nocookie.com/embed/wmiIUN-7qhE', 4);
 
 INSERT INTO actor (actor_id, nombre) VALUES
  (1, 'Chiwetel Ejiofor'),
@@ -77,10 +78,15 @@ INSERT INTO actor (actor_id, nombre) VALUES
  (51, 'Malea Emma Tjandrawidjaja'),
  (52, 'Isabella Rossellini'),
  (53, 'Dean Fleischer Camp'),
- (54, 'Rosa Salazar');
+ (54, 'Rosa Salazar'),
+ (55, 'Tom Hanks'),
+ (56, 'Tim Allen'),
+ (57, 'Annie Potts'),
+ (58, 'Tony Hale'),
+ (59, 'Keanu Reeves');
 
 INSERT INTO pelicula_actor (pelicula_id, actor_id) VALUES
- (1, 1), (1, 2), (2, 3), (2, 4), (2, 5), (2, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (4, 12), (4, 13), (4, 14), (4, 15), (4, 16), (5, 17), (5, 18), (6, 19), (6, 20), (6, 21), (6, 22), (6, 23), (7, 24), (7, 25), (8, 26), (8, 27), (8, 28), (8, 29), (8, 30), (9, 31), (9, 32), (9, 33), (9, 34), (9, 35), (10, 36), (10, 37), (10, 38), (10, 39), (10, 40), (11, 41), (11, 42), (11, 43), (11, 44), (11, 12), (12, 45), (12, 46), (12, 47), (13, 48), (13, 49), (13, 50), (13, 51), (14, 29), (14, 52), (14, 53), (14, 54);
+ (1, 1), (1, 2), (2, 3), (2, 4), (2, 5), (2, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (4, 12), (4, 13), (4, 14), (4, 15), (4, 16), (5, 17), (5, 18), (6, 19), (6, 20), (6, 21), (6, 22), (6, 23), (7, 24), (7, 25), (8, 26), (8, 27), (8, 28), (8, 29), (8, 30), (9, 31), (9, 32), (9, 33), (9, 34), (9, 35), (10, 36), (10, 37), (10, 38), (10, 39), (10, 40), (11, 41), (11, 42), (11, 43), (11, 44), (11, 12), (12, 45), (12, 46), (12, 47), (13, 48), (13, 49), (13, 50), (13, 51), (14, 29), (14, 52), (14, 53), (14, 54), (15, 55), (15, 56), (15, 57), (15, 58), (15, 59);
 
 INSERT INTO socio (socio_id, nombre, email, password_hash, rol) VALUES
  (1, 'Carlos Mamani', 'carlos.mamani@ucb.edu.bo', 'pbkdf2$120000$Y2x1Yi1zYWtpbGEtczEtMQ==$ojuZItKUdED5NbKh20tTHj0sJ1s2JMtRwQQKO3doC/k=', 'socio'),

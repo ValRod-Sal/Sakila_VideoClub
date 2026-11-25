@@ -15,7 +15,7 @@
   display: inline-flex; align-items: center; gap: .45rem; padding: .48rem .85rem;
   background: var(--color-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-line); border-radius: var(--radius); font-size: .85rem; font-weight: 500;
-  transition: border-color .2s;
+  white-space: nowrap; transition: border-color .2s;
 }
 .pill-btn:hover { border-color: var(--color-line-strong); }
 .pill-btn--primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
@@ -97,6 +97,7 @@
   border: 1px solid var(--color-accent); border-radius: var(--radius); font-size: .82rem;
 }
 .demo-banner[hidden] { display: none; }
+.demo-banner code { overflow-wrap: anywhere; }
 
 .cd { position: relative; display: block; width: 100%; aspect-ratio: 1; border-radius: 50%; }
 .cd__spin {
@@ -279,7 +280,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: blur(3px); }
 .stat span { color: var(--color-muted); font-size: .85rem; }
 .stat--alert { border-color: var(--color-accent); }
 .stat--alert strong { color: var(--color-accent); }
-.table-wrap { overflow-x: auto; }
+.table-wrap { position: relative; overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: .86rem; }
 th, td { text-align: left; padding: .6rem .6rem; border-bottom: 1px solid var(--color-line); white-space: nowrap; }
 th { font-weight: 500; color: var(--color-muted); }
@@ -311,7 +312,7 @@ tbody tr:hover { background: color-mix(in srgb, var(--color-line) 35%, transpare
   .wishlist li { flex-wrap: wrap; }
 }
 
-.app:not(.is-ready) main, .app:not(.is-ready) .site-header { visibility: hidden; }
+.app:not(.is-ready) main, .app:not(.is-ready) .site-header, .app:not(.is-ready) .site-footer { visibility: hidden; }
 
 .user-wrap { position: relative; }
 .user-btn { padding-left: .35rem; }
@@ -367,7 +368,6 @@ body:not(.is-admin) .solo-admin { display: none !important; }
 .admin__updated { font-family: var(--font-mono); font-size: .72rem; margin-top: .4rem; }
 .admin__tools { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .admin__stats { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); }
-.admin .table-wrap { position: relative; }
 .admin__stats .stat strong { font-size: 1.9rem; }
 
 .admin__tabs { display: flex; gap: 0; border-bottom: 1px solid var(--color-line); overflow-x: auto; scrollbar-width: none; }

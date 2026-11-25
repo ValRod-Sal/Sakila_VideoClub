@@ -161,6 +161,22 @@ export const DEMO_DATA = {
    "portada": "https://upload.wikimedia.org/wikipedia/en/d/d4/Marcel_the_Shell_with_Shoes_On_%282021_film%29.jpg"
   },
   {
+   "pelicula_id": 15,
+   "titulo": "Toy Story 4",
+   "director": "Josh Cooley",
+   "sinopsis": "Cuando Bonnie convierte un tenedor de plástico en su juguete favorito, Woody emprende un viaje por carretera para cuidarlo y se reencuentra con Bo Peep, quien le muestra que el mundo es mucho más grande de lo que imaginaba.",
+   "anio": 2019,
+   "duracion": 100,
+   "clasificacion": "G",
+   "tarifa_dia": 3.5,
+   "color1": "#4a90c8",
+   "color2": "#132a40",
+   "trailer_url": "https://www.youtube-nocookie.com/embed/wmiIUN-7qhE",
+   "categoria": "Comedia",
+   "reparto": "Tom Hanks, Tim Allen, Annie Potts, Tony Hale, Keanu Reeves",
+   "portada": "https://upload.wikimedia.org/wikipedia/en/4/4c/Toy_Story_4_poster.jpg"
+  },
+  {
    "pelicula_id": 9,
    "titulo": "Uncut Gems",
    "director": "Josh Safdie, Benny Safdie",

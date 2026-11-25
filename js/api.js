@@ -1,5 +1,5 @@
 const BASE = '/api';
-const DEMO_KEY = 'clubsakila:demo-db';
+const DEMO_KEY = 'clubsakila:demo-db:v2';
 const DEMO_SESSION = 'clubsakila:demo-session';
 const MULTA_DIA = 2;
 const DAY = 86_400_000;
@@ -153,7 +153,7 @@ const demo = {
     return nuevo;
   },
   async logout() { try { localStorage.removeItem(DEMO_SESSION); } catch { } return { ok: true }; },
-  async sesion() { return demoUser(await loadDemo()) || fail(401, 'No has iniciado sesión.'); },
+  async sesion() { return demoUser(await loadDemo()); },
   async peliculas({ q = '', categoria = '', clasificacion = '' } = {}) {
     const db = await loadDemo(); requireUser(db);
     const t = norm(String(q).trim().slice(0, 60));
@@ -253,14 +253,14 @@ const server = {
   quitarPortada: peliId => request(`/portadas/${peliId}`, { method: 'DELETE' })
 };
 
+// js/modo.json es un archivo estático que dice { servidor: false }; cuando la página la sirve
+// npm start, el servidor responde { servidor: true }. Así se detecta el modo sin pedir rutas
+// /api/ que no existen en GitHub Pages o Live Server (y sin errores 404 en la consola).
 let probe = null;
-let probeSesion = null;
-const detectMode = () => probe ??= request('/auth/sesion')
-  .then(u => { probeSesion = { ok: true, value: u }; setMode('api'); })
-  .catch(e => {
-    if (!(e instanceof ServerMissing)) probeSesion = { ok: false, value: e };
-    setMode(e instanceof ServerMissing ? 'demo' : 'api');
-  });
+const detectMode = () => probe ??= fetch(new URL('js/modo.json', document.baseURI), { cache: 'no-store' })
+  .then(r => (r.ok ? r.json() : null))
+  .catch(() => null)
+  .then(m => setMode(m?.servidor === true ? 'api' : 'demo'));
 
 const AUTH_CALLS = new Set(['login', 'registro', 'logout', 'sesion']);
 let onExpired = null;
@@ -268,12 +268,6 @@ export const onSessionExpired = fn => { onExpired = fn; };
 
 export const api = Object.fromEntries(Object.keys(server).map(name => [name, async (...args) => {
   if (!modo) await detectMode();
-  if (name === 'sesion' && probeSesion) {
-    const r = probeSesion;
-    probeSesion = null;
-    if (r.ok) return r.value;
-    throw r.value;
-  }
   try {
     return modo === 'demo' ? await demo[name](...args) : await server[name](...args);
   } catch (e) {

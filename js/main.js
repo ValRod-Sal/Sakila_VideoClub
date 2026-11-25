@@ -583,7 +583,8 @@ async function init() {
   onSessionExpired(() => location.replace('login.html?expirada=1'));
   try {
     state.user = await api.sesion();
-  } catch {
+  } catch { }
+  if (!state.user) {
     location.replace('login.html');
     return;
   }

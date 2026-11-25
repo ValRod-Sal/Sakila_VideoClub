@@ -97,7 +97,7 @@ function init() {
 
   onModeChange(m => { $('#demoBanner').hidden = m !== 'demo'; });
   if (new URLSearchParams(location.search).has('expirada')) error($('#loginForm'), 'Tu sesión terminó. Vuelve a iniciar sesión.');
-  api.sesion().then(() => location.replace(ENTRAR)).catch(() => { });
+  api.sesion().then(u => { if (u) location.replace(ENTRAR); }).catch(() => { });
 }
 
 init();

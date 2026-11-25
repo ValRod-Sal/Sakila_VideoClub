@@ -4,7 +4,7 @@
 **Como:** Socio · **Quiero:** buscar por título, director o reparto y filtrar por categoría y clasificación · **Para:** encontrar rápido qué alquilar.
 - **Dado que** el usuario está en el Catálogo, **cuando** escribe “penelope” en el buscador, **entonces** el sistema consulta `GET /api/peliculas?q=penelope` y muestra solo los discos cuyo título, director o reparto coincide (encuentra “Penélope Cruz” aunque se escriba sin tilde).
 - **Dado que** hay un filtro activo, **cuando** se aplica, **entonces** la tira 3D, el índice y el catálogo muestran solo esos discos y el botón “Buscar” de la barra muestra un punto.
-- **Dado que** está en el Catálogo, **cuando** elige categoría “Terror” y clasificación “R”, **entonces** se muestran solo los discos que cumplen ambos filtros, con el contador actualizado.
+- **Dado que** está en el Catálogo, **cuando** elige categoría “Terror” y clasificación “R”, **entonces** se muestran solo los discos que cumplen ambos filtros, con el contador actualizado. Las clasificaciones disponibles son G, PG, PG-13 y R.
 - **Dado que** ningún disco coincide, **cuando** termina la búsqueda, **entonces** aparece un mensaje que sugiere cambiar los filtros.
 - **Validaciones:** la búsqueda se limita a 60 caracteres y los comodines `%` y `_` se tratan como texto.
 
@@ -13,6 +13,7 @@
 - **Dado que** está en el Catálogo, **cuando** hace clic en un disco, **entonces** se abre una ventana modal (`<dialog>`) con los datos de `GET /api/peliculas/:id` y el tráiler en un `<iframe>`.
 - **Dado que** la ficha está abierta, **cuando** cambia los días de préstamo, **entonces** el subtotal se recalcula al instante.
 - **Dado que** la ficha está abierta, **cuando** la cierra, **entonces** el tráiler se detiene.
+- **Validaciones:** el `<iframe>` del tráiler solo admite direcciones de YouTube; los días de la ficha usan `type="number"` con `min="1"` y `max="14"`, y el subtotal se corrige si se escribe un valor fuera de rango.
 
 ## HU-03 · Armar el carrito de alquiler (RF-03)
 **Como:** Socio · **Quiero:** añadir discos y elegir los días de préstamo · **Para:** conocer el total antes de confirmar.
@@ -25,10 +26,12 @@
 **Como:** Socio · **Quiero:** ver mi historial, lo pendiente y mis multas · **Para:** devolver a tiempo.
 - **Dado que** el socio tiene un alquiler vencido, **cuando** abre “Mi cuenta”, **entonces** ve el estado “Vencido” y una multa de Bs 2.00 por cada día de retraso.
 - **Dado que** tiene un alquiler pendiente, **cuando** pulsa “Devolver”, **entonces** el sistema llama a `PATCH .../devolucion` y el estado pasa a “Devuelto”.
+- **Validaciones:** solo se puede devolver un alquiler propio y pendiente (409 si ya fue devuelto); los estados se distinguen con etiquetas de color y la multa se resalta en rojo.
 
 ## HU-05 · Gestionar favoritos (RF-04)
 **Como:** Socio · **Quiero:** marcar discos como favoritos · **Para:** guardarlos para después.
 - **Dado que** está en el Catálogo, **cuando** pulsa “Favorito”, **entonces** el disco se guarda (`PUT`) y aparece en su lista; si lo pulsa otra vez se quita (`DELETE`).
+- **Validaciones:** el botón usa `aria-pressed` y cambia de ♡ a ♥; un aviso confirma cada cambio.
 
 ## HU-06 · Registrarme como socio
 **Como:** Visitante · **Quiero:** crear mi cuenta de socio · **Para:** alquilar y guardar mi historial.
@@ -41,6 +44,7 @@
 ## HU-07 · Cambiar entre tema claro y oscuro
 **Como:** Usuario · **Quiero:** elegir el tema · **Para:** leer cómodo de día o de noche.
 - **Dado que** está en cualquier pantalla, **cuando** pulsa “Claro” u “Oscuro”, **entonces** cambia la paleta y la preferencia se mantiene al recargar.
+- **Validaciones:** si nunca eligió un tema se usa el del sistema (`prefers-color-scheme`); la elección se guarda en `localStorage`.
 
 ## HU-08 · Explorar la tira 3D de discos
 **Como:** Visitante · **Quiero:** recorrer los discos como una tira animada · **Para:** descubrir películas de forma visual.
@@ -53,6 +57,7 @@
 **Como:** Docente o evaluador · **Quiero:** abrir la página aunque no esté corriendo `npm start` · **Para:** revisar la interfaz rápidamente.
 - **Dado que** la página se abre sin API (Live Server, GitHub Pages), **cuando** carga, **entonces** aparece el aviso “Modo demostración” y todas las funciones operan con las mismas reglas que el servidor, guardando los cambios en el navegador.
 - **Dado que** está en modo demostración, **cuando** pulsa “Restablecer datos”, **entonces** vuelven los datos de ejemplo.
+- **Validaciones:** se aplican las mismas reglas que en el servidor (contraseñas, correos únicos, días de 1 a 14, multas); subir portadas muestra un aviso de que necesita el servidor.
 
 ## HU-10 · Iniciar sesión para entrar al club
 **Como:** Socio · **Quiero:** entrar con mi correo y contraseña · **Para:** que solo yo vea y use mi cuenta.

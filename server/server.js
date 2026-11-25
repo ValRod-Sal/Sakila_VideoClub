@@ -127,10 +127,8 @@ route('POST', '/api/auth/logout', 'public', ({ req, ctx }) => {
   return { ok: true };
 });
 
-route('GET', '/api/auth/sesion', 'public', ({ user }) => {
-  if (!user) throw new HttpError(401, 'No has iniciado sesión.');
-  return user;
-});
+// Sin sesión responde null (200) en lugar de 401, para no ensuciar la consola del navegador.
+route('GET', '/api/auth/sesion', 'public', ({ user }) => user || null);
 
 route('GET', '/api/peliculas', 'user', ({ query }) => {
   const where = [], args = [];
@@ -260,6 +258,7 @@ function serveStatic(req, res, pathname) {
   try { rel = decodeURIComponent(pathname).replace(/^\/+/, ''); } catch { return send(res, 400, { error: 'URL inválida' }); }
   if (rel === '') rel = 'index.html';
   if (rel === 'favicon.ico') { res.writeHead(204); return res.end(); }
+  if (rel === 'js/modo.json') return send(res, 200, { servidor: true });
   if (PAGINAS.has(rel)) {
     const user = auth.usuario(req);
     if (rel === 'index.html' && !user) { res.writeHead(302, { Location: '/login.html', 'Cache-Control': 'no-store' }); return res.end(); }

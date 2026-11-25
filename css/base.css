@@ -34,14 +34,14 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--color-
 .empty { color: var(--color-muted); padding: 2rem 0; grid-column: 1 / -1; text-align: center; }
 
 .grain {
-  position: fixed; inset: -2rem; z-index: 95; pointer-events: none; opacity: .05;
+  position: fixed; inset: 0; z-index: 95; pointer-events: none; opacity: .05;
   background-image: radial-gradient(rgba(0, 0, 0, .75) 1px, transparent 0); background-size: 3px 3px;
   animation: grain .55s steps(1) infinite;
 }
 [data-theme="dark"] .grain { opacity: .06; background-image: radial-gradient(rgba(255, 255, 255, .7) 1px, transparent 0); }
 @keyframes grain {
-  0% { transform: translate(0, 0); } 25% { transform: translate(-4px, 3px); }
-  50% { transform: translate(3px, -2px); } 75% { transform: translate(-2px, -3px); } 100% { transform: translate(2px, 4px); }
+  0% { background-position: 0 0; } 25% { background-position: -4px 3px; }
+  50% { background-position: 3px -2px; } 75% { background-position: -2px -3px; } 100% { background-position: 2px 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

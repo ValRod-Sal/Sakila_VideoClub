@@ -59,7 +59,7 @@ Cada película tiene su tráiler oficial de YouTube (verificados en noviembre de
 La base (`database/sakila_club.db`) se crea sola la primera vez a partir de `schema.sql` y `seed.sql`.
 
 ### Modo demostración (sin servidor)
-Si abres la página con Live Server o GitHub Pages, no hay API. En ese caso la página lo detecta y pasa a **modo demostración**: usa los mismos datos, cuentas y reglas que el servidor (inicio de sesión, validaciones, multas, correos únicos), pero guarda los cambios solo en el navegador (`localStorage`). Un aviso lo indica y permite restablecer los datos. Las portadas se cargan directamente desde Wikipedia; subir imágenes propias necesita el servidor.
+Si abres la página con Live Server o GitHub Pages, no hay API. La página lo detecta leyendo `js/modo.json` (un archivo estático que dice `servidor: false`; con `npm start` el servidor responde `true`), sin pedir rutas que no existen (así no aparecen errores en la consola), y pasa a **modo demostración**: usa los mismos datos, cuentas y reglas que el servidor (inicio de sesión, validaciones, multas, correos únicos), pero guarda los cambios solo en el navegador (`localStorage`). Un aviso lo indica y permite restablecer los datos. Las portadas se cargan directamente desde Wikipedia; subir imágenes propias necesita el servidor.
 
 Abrir `index.html` con doble clic (`file://`) no funciona: los navegadores bloquean los módulos de JavaScript en ese caso, y la página muestra un aviso con las instrucciones.
 
@@ -91,7 +91,7 @@ Abrir `index.html` con doble clic (`file://`) no funciona: los navegadores bloqu
 | POST | `/api/auth/login` | Inicia sesión (`email`, `password`) y crea la cookie |
 | POST | `/api/auth/registro` | Crea una cuenta de socio e inicia sesión |
 | POST | `/api/auth/logout` | Cierra la sesión |
-| GET | `/api/auth/sesion` | Usuario de la sesión actual (401 si no hay) |
+| GET | `/api/auth/sesion` | Usuario de la sesión actual (`null` si no hay) |
 | GET | `/api/portadas/:id` | Imagen de la portada (subida, en caché o descargada de TMDB o Wikipedia); 404 si no hay |
 | PUT | `/api/portadas/:id` | **Admin.** Sube una portada (cuerpo: la imagen JPG, PNG o WebP) |
 | DELETE | `/api/portadas/:id` | **Admin.** Quita la portada subida y la caché; se vuelve a buscar en internet |
@@ -122,7 +122,7 @@ assets/    icons/disc.svg
 ```
 
 ## Datos
-Catálogo de 14 películas de A24 (dirección, reparto, duración, clasificación y enlace de tráiler de YouTube). Cada disco muestra la portada de la película (Wikipedia, TMDB o subida por el administrador); si no hay, se dibuja con CSS a partir de dos colores (`color1`, `color2`). Para cambiar el catálogo edita `database/seed.sql` y ejecuta `npm run db:reset` y `npm run demo:build`.
+Catálogo de 15 películas: 14 de A24 y *Toy Story 4* (clasificación G), con dirección, reparto, duración, clasificación y enlace de tráiler de YouTube). Cada disco muestra la portada de la película (Wikipedia, TMDB o subida por el administrador); si no hay, se dibuja con CSS a partir de dos colores (`color1`, `color2`). Para cambiar el catálogo edita `database/seed.sql` y ejecuta `npm run db:reset` y `npm run demo:build`.
 
 ## Despliegue
 GitHub Pages solo sirve archivos estáticos: ahí la página funcionará en modo demostración. Para usar la base de datos real usa **Render**: crea un *Web Service* desde el repositorio (el archivo `render.yaml` ya trae la configuración). Las portadas funcionan sin configurar nada (Wikipedia); si quieres usar TMDB primero, agrega `TMDB_TOKEN` en *Environment*. En el plan gratuito el disco es temporal: la base, las portadas subidas y la caché vuelven a empezar cuando el servicio se reinicia.
