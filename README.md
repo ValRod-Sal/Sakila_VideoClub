@@ -190,6 +190,6 @@ GitHub Pages solo sirve archivos estáticos: ahí la página funcionará en modo
 
 Tecnologías Web I · SIS-214 · Universidad Católica Boliviana · 2026-02.
 
-[Historial de contribuciones](https://github.com/ValRod-Sal/Sakila_VideoClub/graphs/contributors) · [Cambios de versión](CHANGELOG.md) · [Guía de contribución](CONTRIBUTING.md)
+[Historial de contribuciones](https://github.com/ValRod-Sal/Sakila_VideoClub/graphs/contributors) · [Cambios de versión](CHANGELOG.md)
 
 El proyecto utiliza recursos cinematográficos de terceros y servicios externos de portadas y tráileres; sus derechos corresponden a sus respectivos titulares. El desarrollo contó con asistencia de IA.
