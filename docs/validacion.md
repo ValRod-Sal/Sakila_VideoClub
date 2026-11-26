@@ -9,7 +9,7 @@
 | HTML5 | Estructura semántica de las interfaces | `index.html`, `login.html` |
 | CSS3 | Estilos modulares, diseño responsivo y temas | `css/styles.css`, `css/` |
 | JavaScript ES6+ | Módulos, Fetch API y acceso a datos | `js/` |
-| Framework (Vue 3) | App reactiva, plantilla con directivas, componentes y composable | `index.html`, `js/main.js`, `js/componentes.js`, `js/admin.js` |
+| Framework (Vue 3) | App reactiva, plantilla con directivas, componentes y composable | `package.json` (dependencia `vue`), `index.html`, `js/vue/` (app, componentes, composables) |
 | Despliegue | Modo demostración y configuración del servidor | `README.md`, `render.yaml` |
 | Historias de usuario | Especificación funcional | [Historias de usuario](historias-de-usuario.md) |
 | Arquitectura | Organización modular del sistema | [Arquitectura](arquitectura.md) |

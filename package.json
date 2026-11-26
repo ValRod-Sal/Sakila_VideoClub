@@ -1,6 +1,6 @@
 {
   "name": "club-sakila",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "private": true,
   "description": "Club de videos Sakila: tira 3D de discos, catálogo, carrito y cuenta de socio",
   "main": "server/server.js",
@@ -11,6 +11,11 @@
     "start": "node --disable-warning=ExperimentalWarning server/server.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch server/server.js",
     "db:reset": "node --disable-warning=ExperimentalWarning server/reset-db.js",
-    "demo:build": "node --disable-warning=ExperimentalWarning server/build-demo-data.js"
+    "demo:build": "node --disable-warning=ExperimentalWarning server/build-demo-data.js",
+    "postinstall": "node server/copiar-vue.js",
+    "vue:copiar": "node server/copiar-vue.js"
+  },
+  "dependencies": {
+    "vue": "3.5.46"
   }
 }

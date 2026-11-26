@@ -6,7 +6,7 @@
 <a href="https://valrod-sal.github.io/Sakila_VideoClub/">Explorar demo</a> · <a href="#requisitos-e-instalación">Instalación</a> · <a href="#02--diseño-y-documentación">Figma y documentación</a> · <a href="https://drive.google.com/file/d/1DK73Cr-yy5xd6g_4E9qI3BqyN5LvRe8B/view?usp=sharing">Perfil del proyecto (PDF)</a> · <a href="#api-rest">API REST</a>
 </p>
 <p align="center">
-<img alt="Versión 4.1.0" src="https://img.shields.io/badge/versión-4.1.0-891A20?style=flat-square"> <img alt="JavaScript ES6+" src="https://img.shields.io/badge/JavaScript-ES6%2B-D4AF37?style=flat-square"> <img alt="Vue 3" src="https://img.shields.io/badge/Vue-3.5-42B883?style=flat-square"> <img alt="Node.js 22.13+" src="https://img.shields.io/badge/Node.js-22.13%2B-303D35?style=flat-square"> <img alt="SQLite" src="https://img.shields.io/badge/SQLite-database-243B50?style=flat-square">
+<img alt="Versión 4.2.0" src="https://img.shields.io/badge/versión-4.2.0-891A20?style=flat-square"> <img alt="JavaScript ES6+" src="https://img.shields.io/badge/JavaScript-ES6%2B-D4AF37?style=flat-square"> <img alt="Vue 3" src="https://img.shields.io/badge/Vue-3.5.46-42B883?style=flat-square"> <img alt="Node.js 22.13+" src="https://img.shields.io/badge/Node.js-22.13%2B-303D35?style=flat-square"> <img alt="SQLite" src="https://img.shields.io/badge/SQLite-database-243B50?style=flat-square">
 </p>
 
 ## 01 — La experiencia
@@ -60,16 +60,16 @@ Catálogo de películas presentado como discos: acceso con inicio de sesión, ti
 HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones 3D) · JavaScript ES6+ (módulos, Fetch API) · **Vue 3** (Composition API, componentes, directivas) · API REST en Node.js · SQLite.
 
 ### Vue 3
-La interfaz principal (`index.html`) es una app de **Vue 3** sin paso de compilación: Vue se carga como módulo ES desde un CDN (`<script type="importmap">`) y usa el propio `index.html` como plantilla, así el HTML semántico se mantiene y GitHub Pages lo sirve tal cual.
+La interfaz principal (`index.html`) es una app de **Vue 3**, instalado con npm (`"vue": "3.5.46"` en `package.json`). Al ejecutar `npm install`, el script `postinstall` copia Vue a `js/vue/vendor/`; el navegador lo carga desde ahí con un `<script type="importmap">`, sin CDN ni paso de compilación, así que funciona igual con `npm start`, en GitHub Pages y sin internet. La app usa el propio `index.html` como plantilla, así el HTML semántico se mantiene. Todo el código de Vue está en la carpeta `js/vue/`.
 - **Estado reactivo** (`ref`, `reactive`, `computed`, `watch`): catálogo y filtros (RF-01), ficha (RF-02), carrito con persistencia en `localStorage` (RF-03), cuenta del socio (RF-04) y mostrador del administrador.
 - **Directivas** en la plantilla: `v-for`, `v-if`/`v-show`, `v-model`, `@click`, `:class`, `:style`.
-- **Componentes propios** (`js/componentes.js`): `<cd-disco>` (disco con portada), `<tira-discos>` (envuelve la tira 3D), `<cuenta-regresiva>` (tiempo para devolver) y `<tarjeta-stat>` (tarjetas de resumen).
-- **Composable** `useMostrador()` (`js/admin.js`): lógica del mostrador del administrador separada de la vista.
+- **Componentes propios** (`js/vue/componentes/`, un archivo por componente): `<cd-disco>` (disco con portada), `<tira-discos>` (envuelve la tira 3D), `<cuenta-regresiva>` (tiempo para devolver) y `<tarjeta-stat>` (tarjetas de resumen).
+- **Composable** `useMostrador()` (`js/vue/composables/useMostrador.js`): lógica del mostrador del administrador separada de la vista.
 
 ## Requisitos e instalación
 
 ### Requisitos
-Node.js **22.13 o superior** (`node -v`). No hay dependencias: no hace falta `npm install`.
+Node.js **22.13 o superior** (`node -v`). La única dependencia es **Vue 3** (`package.json`). La copia que usa el navegador ya está en `js/vue/vendor/`, así que la página funciona sin instalar nada; `npm install` solo hace falta para actualizar Vue (al terminar, copia el archivo a `js/vue/vendor/`).
 
 Si tienes una base de datos de una versión anterior, ejecuta `npm run db:reset` una vez (la nueva versión agrega contraseñas y sesiones). **Atención:** este comando sustituye los datos existentes por los de ejemplo; respalda los datos que quieras conservar antes de ejecutarlo.
 
@@ -117,6 +117,8 @@ Cada película tiene su tráiler oficial de YouTube (su disponibilidad depende d
 |---|---|
 | `npm start` | Inicia el servidor (API + página) en el puerto 3000 |
 | `npm run dev` | Igual, pero reinicia el servidor al guardar cambios |
+| `npm install` | Instala Vue (la única dependencia) y lo copia a `js/vue/vendor/` |
+| `npm run vue:copiar` | Vuelve a copiar Vue de `node_modules` a `js/vue/vendor/` |
 | `npm run db:reset` | Vuelve la base de datos a los datos de ejemplo |
 | `npm run demo:build` | Regenera `js/demo-data.js` (con las URLs de los pósteres de Wikipedia) después de editar `database/seed.sql` |
 
@@ -175,11 +177,13 @@ Estas medidas corresponden al modo servidor; el modo demostración no ofrece las
 ```
 index.html, login.html
 css/       variables, base, layout, components, auth, styles (@import)
-js/        main.js (app raíz de Vue 3: estado reactivo y arranque según el rol),
-           componentes.js (componentes Vue: <cd-disco>, <tira-discos>, <cuenta-regresiva>, <tarjeta-stat>),
-           admin.js (composable useMostrador del administrador), login.js (acceso),
+js/        main.js (punto de entrada: comprueba la sesión y monta la app de Vue), login.js (acceso),
            disc-strip.js (tira 3D), disc.js (disco y utilidades), api.js (cliente Fetch + modo demostración),
            demo-data.js (generado)
+  vue/     app.js (app raíz de Vue 3: estado reactivo, acciones y vista según el rol)
+    componentes/  CdDisco.js, TiraDiscos.js, CuentaRegresiva.js, TarjetaStat.js, index.js (registro)
+    composables/  useMostrador.js (lógica del mostrador del administrador)
+    vendor/       vue.esm-browser.prod.js (copiado de node_modules al ejecutar npm install)
 server/    server.js (API + archivos estáticos), auth.js (contraseñas y sesiones),
            portadas.js (Wikipedia, TMDB y subidas), db.js (conexión y migraciones), env.js, reset-db.js,
            build-demo-data.js

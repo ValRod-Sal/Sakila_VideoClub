@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## 4.2.0 — Vue instalado con npm
+
+- Vue 3.5.46 como dependencia en `package.json` (`npm install`); `postinstall` lo copia a `js/vue/vendor/` y el navegador lo carga desde ahí (sin CDN).
+- Código de Vue organizado en `js/vue/`: `app.js`, `componentes/` (un archivo por componente) y `composables/useMostrador.js`.
+- `js/main.js` queda como punto de entrada.
+
 ## 4.1.0 — Vue 3
 
 - La interfaz principal pasa a ser una app de Vue 3 (Composition API) sin paso de compilación.

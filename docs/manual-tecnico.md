@@ -5,7 +5,7 @@ Catálogo de películas presentado como discos: acceso con inicio de sesión, ti
 HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones 3D) · JavaScript ES6+ (módulos, Fetch API) · **Vue 3** (Composition API, componentes, directivas) · API REST en Node.js · SQLite.
 
 ## Requisitos
-Node.js **22.13 o superior** (`node -v`). No hay dependencias: no hace falta `npm install`.
+Node.js **22.13 o superior** (`node -v`). La única dependencia es **Vue 3** (`package.json`). La copia que usa el navegador ya está en `js/vue/vendor/`, así que la página funciona sin instalar nada; `npm install` solo hace falta para actualizar Vue (al terminar, copia el archivo a `js/vue/vendor/`).
 
 Si tienes una base de datos de una versión anterior, ejecuta `npm run db:reset` una vez (la nueva versión agrega contraseñas y sesiones).
 
@@ -109,11 +109,13 @@ Abrir `index.html` con doble clic (`file://`) no funciona: los navegadores bloqu
 ```
 index.html, login.html
 css/       variables, base, layout, components, auth, styles (@import)
-js/        main.js (app raíz de Vue 3: estado reactivo y arranque según el rol),
-           componentes.js (componentes Vue: <cd-disco>, <tira-discos>, <cuenta-regresiva>, <tarjeta-stat>),
-           admin.js (composable useMostrador del administrador), login.js (acceso),
+js/        main.js (punto de entrada: comprueba la sesión y monta la app de Vue), login.js (acceso),
            disc-strip.js (tira 3D), disc.js (disco y utilidades), api.js (cliente Fetch + modo demostración),
            demo-data.js (generado)
+  vue/     app.js (app raíz de Vue 3: estado reactivo, acciones y vista según el rol)
+    componentes/  CdDisco.js, TiraDiscos.js, CuentaRegresiva.js, TarjetaStat.js, index.js (registro)
+    composables/  useMostrador.js (lógica del mostrador del administrador)
+    vendor/       vue.esm-browser.prod.js (copiado de node_modules al ejecutar npm install)
 server/    server.js (API + archivos estáticos), auth.js (contraseñas y sesiones),
            portadas.js (Wikipedia, TMDB y subidas), db.js (conexión y migraciones), env.js, reset-db.js,
            build-demo-data.js

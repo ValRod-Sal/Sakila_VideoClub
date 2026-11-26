@@ -1,9 +1,9 @@
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
-import { api } from './api.js';
-import { bs } from './disc.js';
+import { api } from '../../api.js';
+import { bs } from '../../disc.js';
 
 // Mostrador del administrador como composable de Vue: estado reactivo + propiedades computadas.
-// Lo usa la app raíz (main.js) solo cuando inicia sesión un administrador.
+// Lo usa la app raíz (js/vue/app.js) solo cuando inicia sesión un administrador.
 
 const DIA = 86_400_000;
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
