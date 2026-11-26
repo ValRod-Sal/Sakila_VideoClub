@@ -6,4 +6,3 @@ database/cache/
 database/portadas/*
 !database/portadas/.gitkeep
 .DS_Store
-.claude/
