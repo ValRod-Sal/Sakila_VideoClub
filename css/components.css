@@ -413,3 +413,8 @@ body:not(.is-admin) .solo-admin { display: none !important; }
   .admin { padding-top: calc(var(--header-h) + 1.4rem); }
   .admin__tools { width: 100%; }
 }
+
+/* ---------- Vue ---------- */
+[v-cloak] { display: none; }
+.cd-host { display: contents; }
+.hero-info__line { display: block; }

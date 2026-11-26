@@ -5,8 +5,8 @@
 | Capa | Archivos | Responsabilidad |
 |---|---|---|
 | Presentación | index.html, login.html, css/ | Interfaz semántica, temas, diseño responsivo |
-| Interacción | js/main.js, js/login.js, js/admin.js | Eventos, filtros, carrito, acceso y mostrador |
-| Componentes | js/disc.js, js/disc-strip.js | Discos y navegación 3D |
+| Interacción (Vue 3) | js/main.js, js/admin.js, js/login.js | App Vue con estado reactivo: filtros, carrito, cuenta, mostrador (composable useMostrador) y acceso |
+| Componentes | js/componentes.js, js/disc.js, js/disc-strip.js | Componentes Vue (cd-disco, tira-discos, cuenta-regresiva, tarjeta-stat), discos y navegación 3D |
 | Acceso a datos | js/api.js, js/demo-data.js, js/modo.json | Fetch y selección del modo demostración |
 | Servidor | server/server.js, server/auth.js, server/portadas.js | API, sesiones, roles y portadas |
 | Persistencia | server/db.js, database/schema.sql, database/seed.sql | SQLite, datos iniciales y migraciones |

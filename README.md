@@ -6,7 +6,7 @@
 <a href="https://valrod-sal.github.io/Sakila_VideoClub/">Explorar demo</a> · <a href="#requisitos-e-instalación">Instalación</a> · <a href="#02--diseño-y-documentación">Figma y documentación</a> · <a href="https://drive.google.com/file/d/1DK73Cr-yy5xd6g_4E9qI3BqyN5LvRe8B/view?usp=sharing">Perfil del proyecto (PDF)</a> · <a href="#api-rest">API REST</a>
 </p>
 <p align="center">
-<img alt="Versión 4.0.0" src="https://img.shields.io/badge/versión-4.0.0-891A20?style=flat-square"> <img alt="JavaScript ES6+" src="https://img.shields.io/badge/JavaScript-ES6%2B-D4AF37?style=flat-square"> <img alt="Node.js 22.13+" src="https://img.shields.io/badge/Node.js-22.13%2B-303D35?style=flat-square"> <img alt="SQLite" src="https://img.shields.io/badge/SQLite-database-243B50?style=flat-square">
+<img alt="Versión 4.1.0" src="https://img.shields.io/badge/versión-4.1.0-891A20?style=flat-square"> <img alt="JavaScript ES6+" src="https://img.shields.io/badge/JavaScript-ES6%2B-D4AF37?style=flat-square"> <img alt="Vue 3" src="https://img.shields.io/badge/Vue-3.5-42B883?style=flat-square"> <img alt="Node.js 22.13+" src="https://img.shields.io/badge/Node.js-22.13%2B-303D35?style=flat-square"> <img alt="SQLite" src="https://img.shields.io/badge/SQLite-database-243B50?style=flat-square">
 </p>
 
 ## 01 — La experiencia
@@ -44,7 +44,7 @@ Club Sakila transforma el catálogo de películas en una colección de discos na
 
 ```mermaid
 flowchart TD
- U[Socio / Administrador] --> F[HTML5 · CSS3 · JavaScript ES6+]
+ U[Socio / Administrador] --> F[HTML5 · CSS3 · Vue 3 · JavaScript ES6+]
  F --> D{Modo de ejecución}
  D -->|GitHub Pages| L[Demo · localStorage]
  D -->|Servidor| A[Fetch API · Node.js]
@@ -57,7 +57,14 @@ El modo demostración guarda los cambios únicamente en el navegador; no equival
 
 Catálogo de películas presentado como discos: acceso con inicio de sesión, tira 3D interactiva, discos con la portada de cada película, catálogo con lector de discos, ficha con tráiler, carrito de alquiler y cuenta de socio con historial, multas y favoritos. El administrador tiene su propia vista: el mostrador del club, con los préstamos activos y el tiempo que queda para devolver cada disco.
 
-HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones 3D) · JavaScript ES6+ (módulos, Fetch API) · API REST en Node.js · SQLite.
+HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones 3D) · JavaScript ES6+ (módulos, Fetch API) · **Vue 3** (Composition API, componentes, directivas) · API REST en Node.js · SQLite.
+
+### Vue 3
+La interfaz principal (`index.html`) es una app de **Vue 3** sin paso de compilación: Vue se carga como módulo ES desde un CDN (`<script type="importmap">`) y usa el propio `index.html` como plantilla, así el HTML semántico se mantiene y GitHub Pages lo sirve tal cual.
+- **Estado reactivo** (`ref`, `reactive`, `computed`, `watch`): catálogo y filtros (RF-01), ficha (RF-02), carrito con persistencia en `localStorage` (RF-03), cuenta del socio (RF-04) y mostrador del administrador.
+- **Directivas** en la plantilla: `v-for`, `v-if`/`v-show`, `v-model`, `@click`, `:class`, `:style`.
+- **Componentes propios** (`js/componentes.js`): `<cd-disco>` (disco con portada), `<tira-discos>` (envuelve la tira 3D), `<cuenta-regresiva>` (tiempo para devolver) y `<tarjeta-stat>` (tarjetas de resumen).
+- **Composable** `useMostrador()` (`js/admin.js`): lógica del mostrador del administrador separada de la vista.
 
 ## Requisitos e instalación
 
@@ -168,7 +175,9 @@ Estas medidas corresponden al modo servidor; el modo demostración no ofrece las
 ```
 index.html, login.html
 css/       variables, base, layout, components, auth, styles (@import)
-js/        main.js (interfaz y arranque según el rol), admin.js (mostrador del administrador), login.js (acceso),
+js/        main.js (app raíz de Vue 3: estado reactivo y arranque según el rol),
+           componentes.js (componentes Vue: <cd-disco>, <tira-discos>, <cuenta-regresiva>, <tarjeta-stat>),
+           admin.js (composable useMostrador del administrador), login.js (acceso),
            disc-strip.js (tira 3D), disc.js (disco y utilidades), api.js (cliente Fetch + modo demostración),
            demo-data.js (generado)
 server/    server.js (API + archivos estáticos), auth.js (contraseñas y sesiones),

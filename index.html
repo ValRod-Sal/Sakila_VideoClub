@@ -26,6 +26,10 @@
       document.body.classList.add('is-ready');
     });
   </script>
+  <!-- Vue 3 (build para navegador con compilador de plantillas), sin paso de compilación -->
+  <script type="importmap">
+    { "imports": { "vue": "https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.esm-browser.prod.js" } }
+  </script>
   <script type="module" src="js/main.js"></script>
 </head>
 <body id="top" class="app">
@@ -42,241 +46,384 @@
 
   <div class="grain" aria-hidden="true"></div>
 
-  <header class="site-header">
-    <nav class="nav-pill" aria-label="Principal">
-      <a href="#top" class="brand" aria-label="Club Sakila, inicio">
-        <svg viewBox="0 0 24 24" class="brand__mark" aria-hidden="true">
-          <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.6" />
-          <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity=".55" />
-          <circle cx="12" cy="12" r="2.2" fill="currentColor" />
-        </svg>
-        <span class="brand__name">CLUB</span><span class="brand__sub">SAKILA</span>
-      </a>
-      <a href="#discos" class="nav-link solo-socio" data-nav="discos">Discos</a>
-      <a href="#catalogo" class="nav-link solo-socio" data-nav="catalogo">Catálogo</a>
-      <a href="#socio" class="nav-link solo-socio" data-nav="socio">Mi cuenta</a>
-      <button type="button" class="nav-link solo-admin" data-admin-tab="prestamos">Préstamos <span class="admin-link__dot" id="adminNavDot" hidden></span></button>
-      <button type="button" class="nav-link solo-admin" data-admin-tab="historial">Historial</button>
-      <button type="button" class="nav-link solo-admin" data-admin-tab="peliculas">Discos</button>
-      <button type="button" class="nav-link solo-admin" data-admin-tab="socios">Socios</button>
-      <div class="index-wrap solo-socio">
-        <button type="button" class="nav-link index-btn" id="indexBtn" aria-expanded="false" aria-controls="indexMenu">
-          Índice <span class="index-btn__count" id="indexCount">0</span>
-          <svg viewBox="0 0 17 10" fill="none" class="chevron" aria-hidden="true"><path d="M1.5 1.5L8.5 8.5L15.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+  <!-- Raíz de la app Vue: todo lo que está dentro de #app es la plantilla -->
+  <div id="app" v-cloak>
+    <header class="site-header">
+      <nav class="nav-pill" aria-label="Principal">
+        <a href="#top" class="brand" aria-label="Club Sakila, inicio">
+          <svg viewBox="0 0 24 24" class="brand__mark" aria-hidden="true">
+            <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+            <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity=".55" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+          </svg>
+          <span class="brand__name">CLUB</span><span class="brand__sub">SAKILA</span>
+        </a>
+
+        <template v-if="!esAdmin">
+          <a v-for="l in [['discos', 'Discos'], ['catalogo', 'Catálogo'], ['socio', 'Mi cuenta']]" :key="l[0]"
+             :href="'#' + l[0]" class="nav-link" :class="{ 'is-active': navActiva === l[0] }">{{ l[1] }}</a>
+          <div class="index-wrap">
+            <button type="button" class="nav-link index-btn" id="indexBtn" :aria-expanded="menuIndice" aria-controls="indexMenu"
+                    @click.stop="menuIndice = !menuIndice">
+              Índice <span class="index-btn__count">{{ lista.length }}</span>
+              <svg viewBox="0 0 17 10" fill="none" class="chevron" aria-hidden="true"><path d="M1.5 1.5L8.5 8.5L15.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <div class="index-menu" id="indexMenu" v-show="menuIndice">
+              <ol class="index-menu__list">
+                <li v-for="(p, i) in lista" :key="p.pelicula_id">
+                  <button type="button" class="index-item" :aria-current="i === activoIdx" @click="irAlDisco(i)">
+                    <span>{{ p.titulo }}</span><span class="index-item__year">{{ p.anio }}</span>
+                  </button>
+                </li>
+                <li v-if="!lista.length" class="muted index-empty">Sin resultados para este filtro</li>
+              </ol>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <button v-for="t in TABS" :key="t.id" type="button" class="nav-link"
+                  :class="{ 'is-active': mostrador.filtro.tab === t.id }" @click="irATab(t.id)">
+            {{ t.nav }}
+            <span v-if="t.id === 'prestamos' && mostrador.resumen.value.vencidos" class="admin-link__dot" title="Hay préstamos vencidos"></span>
+          </button>
+        </template>
+      </nav>
+
+      <div class="actions">
+        <button v-if="!esAdmin" type="button" class="pill-btn" title="Buscar y filtrar" @click="buscar">
+          Buscar <span v-if="hayFiltro" class="pill-btn__dot"></span>
         </button>
-        <div class="index-menu" id="indexMenu" hidden>
-          <ol class="index-menu__list" id="indexList"></ol>
-        </div>
-      </div>
-    </nav>
-
-    <div class="actions">
-      <button type="button" class="pill-btn solo-socio" id="searchBtn" title="Buscar y filtrar">
-        Buscar <span class="pill-btn__dot" id="filterDot" hidden></span>
-      </button>
-      <button type="button" class="pill-btn" id="themeBtn" aria-label="Cambiar entre tema claro y oscuro">Cine noche</button>
-      <button type="button" class="pill-btn pill-btn--primary solo-socio" id="cartBtn" aria-label="Abrir carrito">
-        Carrito <span id="cartCount" class="count">0</span>
-      </button>
-      <div class="user-wrap">
-        <button type="button" class="pill-btn user-btn" id="userBtn" aria-expanded="false" aria-controls="userMenu" aria-label="Mi sesión">
-          <span class="user-btn__avatar" id="userAvatar" aria-hidden="true">·</span>
-          <span class="user-btn__name" id="userName">Cuenta</span>
+        <button type="button" class="pill-btn" aria-label="Cambiar entre tema claro y oscuro" @click="cambiarTema">
+          {{ tema === 'dark' ? 'Modo claro' : 'Cine noche' }}
         </button>
-        <div class="user-menu" id="userMenu" hidden>
-          <p class="user-menu__name" id="userMenuName"></p>
-          <p class="muted" id="userMenuEmail"></p>
-          <p><span class="badge" id="userMenuRol"></span></p>
-          <a class="btn btn--ghost btn--sm solo-socio" href="#socio" id="userMenuCuenta">Mi cuenta</a>
-          <button type="button" class="btn btn--sm" id="logoutBtn">Cerrar sesión</button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <p class="demo-banner" id="demoBanner" hidden>
-    <strong>Modo demostración.</strong> No se encontró el servidor, así que los cambios se guardan solo en este navegador.
-    Para usar la base de datos ejecuta <code>npm start</code> y entra a <code>http://localhost:3000</code>.
-    <button type="button" class="btn btn--ghost btn--sm" id="demoReset">Restablecer datos</button>
-  </p>
-
-  <main>
-    <section id="discos" class="hero solo-socio" tabindex="-1" aria-roledescription="carrusel" aria-label="Tira de discos">
-      <h1 class="sr-only">Club Sakila: videoclub de discos</h1>
-
-      <aside class="hero-info" aria-live="polite">
-        <h2 class="hero-info__title" id="hTitle">Cargando…</h2>
-        <dl class="hero-info__list">
-          <div><dt>Dirigida por</dt><dd id="hDirector">—</dd></div>
-          <div><dt>Año</dt><dd id="hYear">—</dd></div>
-          <div><dt>Reparto</dt><dd id="hCast">—</dd></div>
-          <div><dt>Club Sakila</dt><dd id="hClub">—</dd></div>
-        </dl>
-        <div class="hero-cta">
-          <button type="button" class="line-btn" id="hDetail"><span>Ficha y alquiler</span></button>
-          <button type="button" class="line-btn" id="hTrailer"><span>▶ Tráiler</span></button>
-          <button type="button" class="line-btn" id="hRent"><span id="hRentText">+ Carrito</span></button>
-          <div class="hero-cta__icons">
-            <button type="button" class="icon-action" id="hFav" aria-pressed="false" aria-label="Guardar en favoritos" title="Favorito"><span id="hFavIcon">♡</span></button>
-            <button type="button" class="icon-action" id="hFlip" title="Voltear el disco (Espacio)">↻ Voltear</button>
+        <button v-if="!esAdmin" type="button" class="pill-btn pill-btn--primary" aria-label="Abrir carrito" @click="abrirCarrito">
+          Carrito <span class="count" :class="{ bump: cartBump }" @animationend="cartBump = false">{{ cartFilas.length }}</span>
+        </button>
+        <div class="user-wrap">
+          <button type="button" class="pill-btn user-btn" id="userBtn" :aria-expanded="menuUsuario" aria-controls="userMenu"
+                  aria-label="Mi sesión" @click.stop="menuUsuario = !menuUsuario">
+            <span class="user-btn__avatar" aria-hidden="true">{{ iniciales }}</span>
+            <span class="user-btn__name">{{ primerNombre }}</span>
+          </button>
+          <div class="user-menu" id="userMenu" v-show="menuUsuario">
+            <p class="user-menu__name">{{ user.nombre }}</p>
+            <p class="muted">{{ user.email }}</p>
+            <p><span class="badge">{{ esAdmin ? 'Administrador' : 'Socio' }}</span></p>
+            <a v-if="!esAdmin" class="btn btn--ghost btn--sm" href="#socio" @click="menuUsuario = false">Mi cuenta</a>
+            <button type="button" class="btn btn--sm" @click="logout">Cerrar sesión</button>
           </div>
         </div>
-      </aside>
-
-      <div class="disc-stage" id="discStage">
-        <div class="disc-track" id="discTrack"></div>
       </div>
+    </header>
 
-      <div class="hero-facts" aria-hidden="true">
-        <div class="fact"><span class="eyebrow">Duración</span><strong id="fDur">—</strong></div>
-        <div class="fact"><span class="eyebrow">Género</span><strong id="fCat">—</strong></div>
-        <div class="fact"><span class="eyebrow">Tarifa por día</span><strong id="fTar">—</strong></div>
-      </div>
+    <p class="demo-banner" v-if="modo === 'demo'">
+      <strong>Modo demostración.</strong> No se encontró el servidor, así que los cambios se guardan solo en este navegador.
+      Para usar la base de datos ejecuta <code>npm start</code> y entra a <code>http://localhost:3000</code>.
+      <button type="button" class="btn btn--ghost btn--sm" @click="restablecerDemo">Restablecer datos</button>
+    </p>
 
-      <div class="strip-controls">
-        <button type="button" class="strip-arrow" id="prevBtn" aria-label="Disco anterior">←</button>
-        <span class="strip-counter" id="stripCounter">00 / 00</span>
-        <button type="button" class="strip-arrow" id="nextBtn" aria-label="Disco siguiente">→</button>
-      </div>
-      <p class="strip-hint">Rueda del ratón, arrastre o <kbd>←</kbd> <kbd>→</kbd> · <kbd>Espacio</kbd> voltea · <kbd>Enter</kbd> abre la ficha</p>
-      <p id="srStatus" class="sr-only" aria-live="polite" aria-atomic="true"></p>
-    </section>
+    <main>
+      <!-- ================= Vista del socio ================= -->
+      <template v-if="!esAdmin">
+        <section id="discos" class="hero" tabindex="-1" aria-roledescription="carrusel" aria-label="Tira de discos">
+          <h1 class="sr-only">Club Sakila: videoclub de discos</h1>
 
-    <section id="catalogo" class="catalog-section container solo-socio" aria-labelledby="catTitle">
-      <div class="section-head">
-        <p class="eyebrow">Exploración completa</p>
-        <h2 id="catTitle" class="section-title">Catálogo de discos</h2>
-      </div>
+          <aside class="hero-info" aria-live="polite">
+            <h2 class="hero-info__title">{{ activo ? activo.titulo : (cargaError ? 'Sin conexión' : (lista.length || !todas.length ? 'Cargando…' : 'Sin resultados')) }}</h2>
+            <dl class="hero-info__list">
+              <div><dt>Dirigida por</dt><dd><template v-if="activo"><span v-for="d in activo.director.split(',')" :key="d" class="hero-info__line">{{ d.trim() }}</span></template><template v-else>—</template></dd></div>
+              <div><dt>Año</dt><dd>{{ activo ? activo.anio : '—' }}</dd></div>
+              <div><dt>Reparto</dt><dd>
+                <template v-if="activo">
+                  <span v-for="a in heroReparto.slice(0, 5)" :key="a" class="hero-info__line">{{ a }}</span>
+                  <span v-if="heroReparto.length > 5" class="hero-info__line muted">y {{ heroReparto.length - 5 }} más</span>
+                </template>
+                <template v-else>—</template>
+              </dd></div>
+              <div><dt>Club Sakila</dt><dd>{{ activo ? activo.categoria + ' · ' + activo.clasificacion : '—' }}</dd></div>
+            </dl>
+            <div class="hero-cta">
+              <button type="button" class="line-btn" :disabled="!activo" @click="abrirDetalle(activo.pelicula_id)"><span>Ficha y alquiler</span></button>
+              <button type="button" class="line-btn" :disabled="!activo" @click="abrirTrailer(activo)"><span>▶ Tráiler</span></button>
+              <button type="button" class="line-btn" :disabled="!activo" @click="addToCart(activo.pelicula_id)"><span>+ Carrito{{ activo ? ' · ' + bs(activo.tarifa_dia) : '' }}</span></button>
+              <div class="hero-cta__icons">
+                <button type="button" class="icon-action" id="hFav" :disabled="!activo" :aria-pressed="Boolean(activo && isFav(activo.pelicula_id))"
+                        aria-label="Guardar en favoritos" title="Favorito" @click="toggleFav(activo.pelicula_id)">{{ activo && isFav(activo.pelicula_id) ? '♥' : '♡' }}</button>
+                <button type="button" class="icon-action" :disabled="!activo" title="Voltear el disco (Espacio)" @click="tira.toggleFlip()">↻ Voltear</button>
+              </div>
+            </div>
+          </aside>
 
-      <form class="filters" role="search" id="filters">
-        <label class="field field--grow">Buscar por título, director o reparto
-          <input type="search" id="q" maxlength="60" placeholder="Ej.: Uncut Gems, Safdie, Penélope Cruz…" autocomplete="off">
-        </label>
-        <label class="field">Categoría
-          <select id="fCategoria"><option value="">Todas</option></select>
-        </label>
-        <label class="field">Clasificación
-          <select id="fClasif">
-            <option value="">Todas</option>
-            <option>G</option><option>PG</option><option>PG-13</option><option>R</option>
-          </select>
-        </label>
-        <div class="filters__meta">
-          <p id="resultCount" class="muted" aria-live="polite"></p>
-          <button type="reset" class="btn btn--ghost btn--sm" id="clearFilters">Limpiar</button>
-        </div>
-      </form>
+          <tira-discos ref="tira" @activo="onActivo" @abrir="p => abrirDetalle(p.pelicula_id)"></tira-discos>
 
-      <div class="catalog">
-        <ul class="disc-grid" id="discGrid"><li class="empty">Cargando discos…</li></ul>
-        <aside class="drive" aria-label="Lector de discos" aria-live="polite">
-          <div class="drive__body"><div class="drive__tray"><div class="drive__slot"><span class="drive__led" id="driveLed"></span></div></div></div>
-          <div class="drive__bubble" id="driveInfo">
-            <p class="drive__idle">Inserta un disco: pasa el cursor sobre uno y aquí verás su información.</p>
+          <div class="hero-facts" aria-hidden="true">
+            <div class="fact"><span class="eyebrow">Duración</span><strong>{{ activo ? activo.duracion + ' min' : '—' }}</strong></div>
+            <div class="fact"><span class="eyebrow">Género</span><strong>{{ activo ? activo.categoria : '—' }}</strong></div>
+            <div class="fact"><span class="eyebrow">Tarifa por día</span><strong>{{ activo ? bs(activo.tarifa_dia) : '—' }}</strong></div>
           </div>
-        </aside>
-      </div>
-    </section>
 
-    <section id="socio" class="socio container solo-socio" aria-labelledby="socioTitle">
-      <div class="socio__head">
-        <div class="section-head">
-          <p class="eyebrow">Gestión de cuenta</p>
-          <h2 id="socioTitle" class="section-title">Mi cuenta de socio</h2>
+          <div class="strip-controls">
+            <button type="button" class="strip-arrow" aria-label="Disco anterior" :disabled="!activo" @click="tira.prev()">←</button>
+            <span class="strip-counter">{{ contador }}</span>
+            <button type="button" class="strip-arrow" aria-label="Disco siguiente" :disabled="!activo" @click="tira.next()">→</button>
+          </div>
+          <p class="strip-hint">Rueda del ratón, arrastre o <kbd>←</kbd> <kbd>→</kbd> · <kbd>Espacio</kbd> voltea · <kbd>Enter</kbd> abre la ficha</p>
+          <p class="sr-only" aria-live="polite" aria-atomic="true">{{ activo ? activo.titulo + ', disco ' + (activoIdx + 1) + ' de ' + lista.length : '' }}</p>
+        </section>
+
+        <section id="catalogo" class="catalog-section container" aria-labelledby="catTitle">
+          <div class="section-head">
+            <p class="eyebrow">Exploración completa</p>
+            <h2 id="catTitle" class="section-title">Catálogo de discos</h2>
+          </div>
+
+          <form class="filters" role="search" @submit.prevent @reset.prevent="limpiarFiltros">
+            <label class="field field--grow">Buscar por título, director o reparto
+              <input type="search" id="q" v-model="filtros.q" maxlength="60" placeholder="Ej.: Uncut Gems, Safdie, Penélope Cruz…" autocomplete="off">
+            </label>
+            <label class="field">Categoría
+              <select v-model="filtros.categoria">
+                <option value="">Todas</option>
+                <option v-for="c in categorias" :key="c">{{ c }}</option>
+              </select>
+            </label>
+            <label class="field">Clasificación
+              <select v-model="filtros.clasificacion">
+                <option value="">Todas</option>
+                <option v-for="c in ['G', 'PG', 'PG-13', 'R']" :key="c">{{ c }}</option>
+              </select>
+            </label>
+            <div class="filters__meta">
+              <p class="muted" aria-live="polite">{{ plural(lista.length, 'disco', 'discos') }}</p>
+              <button type="reset" class="btn btn--ghost btn--sm">Limpiar</button>
+            </div>
+          </form>
+
+          <div class="catalog">
+            <ul class="disc-grid">
+              <li v-for="p in lista" :key="p.pelicula_id" class="disc-item" :style="colorVars(p)"
+                  @mouseenter="enLector = p" @focusin="enLector = p">
+                <button class="disc-btn" type="button" :aria-label="'Ver ficha de ' + p.titulo" @click="abrirDesdeCatalogo(p.pelicula_id)">
+                  <cd-disco :peli="p"></cd-disco>
+                </button>
+                <div class="disc-meta">
+                  <p class="disc-meta__title">{{ p.titulo }}</p>
+                  <p>{{ p.anio }} · {{ p.categoria }} · <span class="badge" :class="'badge--' + p.clasificacion">{{ p.clasificacion }}</span></p>
+                  <div class="disc-actions">
+                    <button class="btn btn--sm" type="button" @click="addToCart(p.pelicula_id)">Alquilar · {{ bs(p.tarifa_dia) }}/día</button>
+                    <button class="btn btn--ghost btn--sm" type="button" :aria-pressed="isFav(p.pelicula_id)"
+                            :aria-label="(isFav(p.pelicula_id) ? 'Quitar de' : 'Añadir a') + ' favoritos: ' + p.titulo"
+                            @click="toggleFav(p.pelicula_id)">{{ isFav(p.pelicula_id) ? '♥' : '♡' }}</button>
+                  </div>
+                </div>
+              </li>
+              <li v-if="cargaError" class="empty">No se pudo cargar el catálogo. Inicia el servidor con <code>npm start</code> y entra a http://localhost:3000. ({{ cargaError }})</li>
+              <li v-else-if="!todas.length" class="empty">Cargando discos…</li>
+              <li v-else-if="!lista.length" class="empty">No hay discos con esos filtros. Prueba con otra categoría o borra la búsqueda.</li>
+            </ul>
+            <aside class="drive" aria-label="Lector de discos" aria-live="polite">
+              <div class="drive__body"><div class="drive__tray"><div class="drive__slot"><span class="drive__led" :class="{ on: lector }"></span></div></div></div>
+              <div class="drive__bubble">
+                <template v-if="lector">
+                  <strong class="drive__title">{{ lector.p.titulo }}</strong>
+                  <p class="drive__meta">{{ lector.p.categoria }} · {{ lector.p.anio }} · {{ lector.p.duracion }} min · <span class="badge" :class="'badge--' + lector.p.clasificacion">{{ lector.p.clasificacion }}</span></p>
+                  <p class="drive__syn">{{ lector.p.sinopsis }}</p>
+                  <dl class="drive__facts">
+                    <div><dt>Dirección</dt><dd>{{ lector.p.director }}</dd></div>
+                    <div><dt>Reparto</dt><dd>{{ lector.reparto }}</dd></div>
+                    <div><dt>Tarifa</dt><dd>{{ bs(lector.p.tarifa_dia) }} por día</dd></div>
+                    <div v-if="lector.tuLista"><dt>Tu lista</dt><dd>{{ lector.tuLista }}</dd></div>
+                  </dl>
+                  <p class="drive__cta">Haz clic en el disco para ver la ficha completa.</p>
+                </template>
+                <p v-else class="drive__idle">Inserta un disco: pasa el cursor sobre uno y aquí verás su información.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="socio" class="socio container" aria-labelledby="socioTitle">
+          <div class="socio__head">
+            <div class="section-head">
+              <p class="eyebrow">Gestión de cuenta</p>
+              <h2 id="socioTitle" class="section-title">Mi cuenta de socio</h2>
+            </div>
+            <p class="socio__who"><strong>{{ user.nombre }}</strong><span class="muted">{{ user.email }}</span></p>
+          </div>
+
+          <div class="stats">
+            <tarjeta-stat :valor="resumenCuenta.total" etiqueta="Alquileres en total"></tarjeta-stat>
+            <tarjeta-stat :valor="resumenCuenta.activos" etiqueta="Discos en préstamo"></tarjeta-stat>
+            <tarjeta-stat :valor="resumenCuenta.vencidos" etiqueta="Préstamos vencidos" :alerta="resumenCuenta.vencidos > 0"></tarjeta-stat>
+            <tarjeta-stat :valor="bs(resumenCuenta.multas)" etiqueta="Multas por atraso" :alerta="resumenCuenta.multas > 0"></tarjeta-stat>
+            <tarjeta-stat :valor="bs(resumenCuenta.gastado)" etiqueta="Total en alquileres"></tarjeta-stat>
+          </div>
+
+          <div class="socio-grid">
+            <article>
+              <h3>Historial de alquileres</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Película</th><th>Alquilado</th><th>Límite</th><th>Estado</th><th>Alquiler</th><th>Multa</th><th><span class="sr-only">Acción</span></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="x in alquileres" :key="x.alquiler_id">
+                      <td><strong>{{ x.titulo }}</strong><small class="muted"> · {{ plural(x.dias, 'día', 'días') }}</small></td>
+                      <td>{{ fecha(x.fecha_alquiler) }}</td>
+                      <td>{{ fecha(x.fecha_limite) }}</td>
+                      <td><span class="badge" :class="claseEstado(x.estado)">{{ x.estado }}</span></td>
+                      <td>{{ bs(x.total) }}</td>
+                      <td><strong v-if="Number(x.multa)" class="text-alert">{{ bs(x.multa) }}</strong><template v-else>—</template></td>
+                      <td><button v-if="!x.fecha_devolucion" class="btn btn--sm" type="button" :disabled="devolviendo === x.alquiler_id" @click="devolver(x)">Devolver</button></td>
+                    </tr>
+                    <tr v-if="!alquileres.length"><td colspan="7" class="empty">Aún no hay alquileres. Añade un disco al carrito para empezar.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="muted table-note">La multa por cada día de retraso es de Bs 2.00.</p>
+            </article>
+            <article>
+              <h3>Lista de favoritos</h3>
+              <ul class="wishlist">
+                <li v-for="p in favoritos" :key="p.pelicula_id">
+                  <span class="wishlist__disc"><cd-disco :peli="p"></cd-disco></span>
+                  <div class="wishlist__info"><strong>{{ p.titulo }}</strong><span class="muted">{{ p.anio }} · {{ bs(p.tarifa_dia) }}/día</span></div>
+                  <span class="wishlist__actions">
+                    <button class="btn btn--ghost btn--sm" type="button" @click="abrirDetalle(p.pelicula_id)">Ver</button>
+                    <button class="btn btn--sm" type="button" @click="addToCart(p.pelicula_id)">Alquilar</button>
+                    <button class="icon-btn" type="button" :aria-label="'Quitar ' + p.titulo + ' de favoritos'" @click="toggleFav(p.pelicula_id)">✕</button>
+                  </span>
+                </li>
+                <li v-if="!favoritos.length" class="empty">Marca un disco con ♡ y aparecerá aquí.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+      </template>
+
+      <!-- ================= Vista del administrador ================= -->
+      <section v-else id="admin" class="admin container" aria-labelledby="adminTitle">
+        <header class="admin__head">
+          <div>
+            <p class="eyebrow">Administración · Club Sakila · {{ hoy }}</p>
+            <h2 id="adminTitle">Mostrador del club</h2>
+            <p class="muted admin__updated" aria-live="polite">{{ mostrador.cargando.value && !mostrador.cargadoEn.value ? 'Cargando…' : mostrador.cargadoEn.value ? 'Actualizado a las ' + mostrador.cargadoEn.value.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }) : '' }}</p>
+          </div>
+          <div class="admin__tools">
+            <button type="button" class="pill-btn" @click="actualizarMostrador">↻ Actualizar</button>
+            <button type="button" class="pill-btn" @click="mostrador.exportarCsv()">Exportar CSV</button>
+          </div>
+        </header>
+
+        <div class="stats admin__stats">
+          <tarjeta-stat :valor="mostrador.resumen.value.enPrestamo" etiqueta="Discos en préstamo"></tarjeta-stat>
+          <tarjeta-stat :valor="mostrador.resumen.value.vencidos" etiqueta="Préstamos vencidos" :alerta="mostrador.resumen.value.vencidos > 0"></tarjeta-stat>
+          <tarjeta-stat :valor="mostrador.resumen.value.pronto" etiqueta="Vencen en menos de 24 h"></tarjeta-stat>
+          <tarjeta-stat :valor="bs(mostrador.resumen.value.multas)" etiqueta="Multas por cobrar" :alerta="mostrador.resumen.value.multas > 0"></tarjeta-stat>
+          <tarjeta-stat :valor="bs(mostrador.resumen.value.ingresosMes)" etiqueta="Alquileres este mes"></tarjeta-stat>
+          <tarjeta-stat :valor="mostrador.resumen.value.libres" :extra="'/ ' + mostrador.resumen.value.totalPeliculas" etiqueta="Títulos sin préstamo activo"></tarjeta-stat>
         </div>
-        <p class="socio__who" id="socioInfo"></p>
-      </div>
 
+        <div class="admin__tabs" role="tablist" aria-label="Secciones del panel">
+          <button v-for="(t, i) in TABS" :key="t.id" type="button" role="tab" :id="'atab-' + t.id" :aria-controls="'apanel-' + t.id"
+                  :aria-selected="mostrador.filtro.tab === t.id" :tabindex="mostrador.filtro.tab === t.id ? 0 : -1"
+                  @click="mostrador.filtro.tab = t.id" @keydown.right.prevent="moverTab(i, 1)" @keydown.left.prevent="moverTab(i, -1)">
+            {{ t.nombre }} <span class="admin__tabcount">{{ mostrador.conteos.value[t.id] }}</span>
+          </button>
+        </div>
 
-      <div class="stats" id="stats"></div>
+        <div class="admin__filters">
+          <label class="field field--grow">Buscar socio o película
+            <input type="search" v-model="mostrador.filtro.q" maxlength="60" placeholder="Ej.: Carlos, Uncut Gems…" autocomplete="off">
+          </label>
+          <label class="field" v-if="mostrador.filtro.tab === 'historial'">Estado
+            <select v-model="mostrador.filtro.estado">
+              <option value="">Todos</option>
+              <option v-for="e in ['En curso', 'Vencido', 'Devuelto']" :key="e">{{ e }}</option>
+            </select>
+          </label>
+        </div>
 
-      <div class="socio-grid">
-        <article>
-          <h3>Historial de alquileres</h3>
+        <div role="tabpanel" id="apanel-prestamos" aria-labelledby="atab-prestamos" class="admin__panel" v-show="mostrador.filtro.tab === 'prestamos'">
           <div class="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Película</th><th>Alquilado</th><th>Límite</th><th>Estado</th><th>Alquiler</th><th>Multa</th><th><span class="sr-only">Acción</span></th></tr>
-              </thead>
-              <tbody id="rentalsBody"></tbody>
+            <table class="admin-table">
+              <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Devolver hasta</th><th>Tiempo para devolver</th><th>Multa</th><th><span class="sr-only">Acción</span></th></tr></thead>
+              <tbody>
+                <tr v-for="a in mostrador.prestamos.value" :key="a.alquiler_id" :class="{ 'row--late': a.vencido }">
+                  <td><div class="admin-film">
+                    <span class="admin-film__disc"><cd-disco :peli="a.peli || { titulo: a.titulo }"></cd-disco></span>
+                    <span><strong class="admin-film__title">{{ a.titulo }}</strong><small>{{ plural(a.dias, 'día', 'días') }} · {{ bs(a.total) }}</small></span>
+                  </div></td>
+                  <td><div class="admin-who"><strong>{{ a.socio }}</strong><small>{{ a.socio_email }}</small></div></td>
+                  <td>{{ fechaHora(a.fecha_alquiler) }}</td>
+                  <td>{{ fechaHora(a.fecha_limite) }}</td>
+                  <td><cuenta-regresiva :inicio="a.fecha_alquiler" :limite="a.fecha_limite" :ahora="mostrador.ahora.value"></cuenta-regresiva></td>
+                  <td><strong v-if="Number(a.multa)" class="text-alert">{{ bs(a.multa) }}</strong><template v-else>—</template></td>
+                  <td><button class="btn btn--sm" type="button" @click="devolverAdmin(a)">Registrar devolución</button></td>
+                </tr>
+                <tr v-if="mostrador.error.value"><td colspan="7" class="empty">No se pudo cargar el mostrador. Inicia el servidor con <code>npm start</code>. ({{ mostrador.error.value }})</td></tr>
+                <tr v-else-if="!mostrador.prestamos.value.length"><td colspan="7" class="empty">{{ mostrador.filtro.q ? 'Ningún préstamo activo coincide con la búsqueda.' : 'No hay discos en préstamo ahora mismo.' }}</td></tr>
+              </tbody>
             </table>
           </div>
-          <p class="muted table-note">La multa por cada día de retraso es de Bs 2.00.</p>
-        </article>
-        <article>
-          <h3>Lista de favoritos</h3>
-          <ul class="wishlist" id="wishlist"></ul>
-        </article>
-      </div>
-    </section>
-    <section id="admin" class="admin container solo-admin" aria-labelledby="adminTitle">
-      <header class="admin__head">
-        <div>
-          <p class="eyebrow">Administración · Club Sakila · <span id="adminHoy"></span></p>
-          <h2 id="adminTitle">Mostrador del club</h2>
-          <p class="muted admin__updated" id="adminUpdated" aria-live="polite"></p>
+          <p class="muted table-note">Ordenados por urgencia: primero los vencidos, luego los que vencen antes. La multa se acumula a Bs 2.00 por día de atraso.</p>
         </div>
-        <div class="admin__tools">
-          <button type="button" class="pill-btn" id="adminRefresh">↻ Actualizar</button>
-          <button type="button" class="pill-btn" id="adminCsv">Exportar CSV</button>
+
+        <div role="tabpanel" id="apanel-historial" aria-labelledby="atab-historial" class="admin__panel" v-show="mostrador.filtro.tab === 'historial'">
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Límite</th><th>Devuelto</th><th>Estado</th><th>Alquiler</th><th>Multa</th></tr></thead>
+              <tbody>
+                <tr v-for="a in mostrador.historial.value" :key="a.alquiler_id">
+                  <td><div class="admin-film">
+                    <span class="admin-film__disc"><cd-disco :peli="a.peli || { titulo: a.titulo }"></cd-disco></span>
+                    <span><strong class="admin-film__title">{{ a.titulo }}</strong><small>{{ plural(a.dias, 'día', 'días') }}</small></span>
+                  </div></td>
+                  <td><div class="admin-who"><strong>{{ a.socio }}</strong><small>{{ a.socio_email }}</small></div></td>
+                  <td>{{ fecha(a.fecha_alquiler) }}</td>
+                  <td>{{ fecha(a.fecha_limite) }}</td>
+                  <td>{{ fecha(a.fecha_devolucion) }}</td>
+                  <td><span class="badge" :class="claseEstado(a.estado)">{{ a.estado }}</span></td>
+                  <td>{{ bs(a.total) }}</td>
+                  <td><strong v-if="Number(a.multa)" class="text-alert">{{ bs(a.multa) }}</strong><template v-else>—</template></td>
+                </tr>
+                <tr v-if="!mostrador.historial.value.length"><td colspan="8" class="empty">No hay alquileres con ese filtro.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </header>
 
-      <div class="stats admin__stats" id="adminStats"></div>
-
-      <div class="admin__tabs" role="tablist" aria-label="Secciones del panel">
-        <button type="button" role="tab" id="atab-prestamos" aria-controls="apanel-prestamos" aria-selected="true">Préstamos activos <span class="admin__tabcount" id="acount-prestamos">0</span></button>
-        <button type="button" role="tab" id="atab-historial" aria-controls="apanel-historial" aria-selected="false" tabindex="-1">Historial <span class="admin__tabcount" id="acount-historial">0</span></button>
-        <button type="button" role="tab" id="atab-peliculas" aria-controls="apanel-peliculas" aria-selected="false" tabindex="-1">Discos <span class="admin__tabcount" id="acount-peliculas">0</span></button>
-        <button type="button" role="tab" id="atab-socios" aria-controls="apanel-socios" aria-selected="false" tabindex="-1">Socios <span class="admin__tabcount" id="acount-socios">0</span></button>
-      </div>
-
-      <div class="admin__filters">
-        <label class="field field--grow">Buscar socio o película
-          <input type="search" id="adminQ" maxlength="60" placeholder="Ej.: Carlos, Uncut Gems…" autocomplete="off">
-        </label>
-        <label class="field" id="adminEstadoField">Estado
-          <select id="adminEstado">
-            <option value="">Todos</option>
-            <option>En curso</option>
-            <option>Vencido</option>
-            <option>Devuelto</option>
-          </select>
-        </label>
-      </div>
-
-      <section role="tabpanel" id="apanel-prestamos" aria-labelledby="atab-prestamos" class="admin__panel">
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Devolver hasta</th><th>Tiempo para devolver</th><th>Multa</th><th><span class="sr-only">Acción</span></th></tr></thead>
-            <tbody id="adminPrestamos"></tbody>
-          </table>
+        <div role="tabpanel" id="apanel-peliculas" aria-labelledby="atab-peliculas" class="admin__panel" v-show="mostrador.filtro.tab === 'peliculas'">
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Disco</th><th>Disponibilidad</th><th>Veces alquilado</th><th>Popularidad</th><th>Ingresos</th><th><span class="sr-only">Acción</span></th></tr></thead>
+              <tbody>
+                <tr v-for="x in mostrador.discos.value" :key="x.p.pelicula_id">
+                  <td><div class="admin-film">
+                    <span class="admin-film__disc"><cd-disco :peli="x.p"></cd-disco></span>
+                    <span><strong class="admin-film__title">{{ x.p.titulo }}</strong><small>{{ x.p.anio }} · {{ x.p.categoria }} · {{ bs(x.p.tarifa_dia) }}/día</small></span>
+                  </div></td>
+                  <td class="avail" :class="{ 'avail--free': !x.activos.length }">
+                    <template v-if="x.activos.length"><span v-for="a in x.activos" :key="a.alquiler_id" class="hero-info__line">Con {{ a.socio }} hasta {{ fecha(a.fecha_limite) }}</span></template>
+                    <template v-else>Sin préstamos activos</template>
+                  </td>
+                  <td>{{ x.veces }}</td>
+                  <td><span class="pop-bar" role="img" :aria-label="x.veces + ' alquileres'"><span :style="{ '--p': x.pop.toFixed(1) + '%' }"></span></span></td>
+                  <td>{{ bs(x.ingresos) }}</td>
+                  <td><button class="btn btn--ghost btn--sm" type="button" @click="abrirDetalle(x.p.pelicula_id)">Ficha y portada</button></td>
+                </tr>
+                <tr v-if="!mostrador.discos.value.length"><td colspan="6" class="empty">Ningún disco coincide con la búsqueda.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <p class="muted table-note">Ordenados por urgencia: primero los vencidos, luego los que vencen antes. La multa se acumula a Bs 2.00 por día de atraso.</p>
-      </section>
 
-      <section role="tabpanel" id="apanel-historial" aria-labelledby="atab-historial" class="admin__panel" hidden>
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Disco</th><th>Socio</th><th>Alquilado</th><th>Límite</th><th>Devuelto</th><th>Estado</th><th>Alquiler</th><th>Multa</th></tr></thead>
-            <tbody id="adminHistorial"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section role="tabpanel" id="apanel-peliculas" aria-labelledby="atab-peliculas" class="admin__panel" hidden>
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Disco</th><th>Disponibilidad</th><th>Veces alquilado</th><th>Popularidad</th><th>Ingresos</th><th><span class="sr-only">Acción</span></th></tr></thead>
-            <tbody id="adminPeliculas"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section role="tabpanel" id="apanel-socios" aria-labelledby="atab-socios" class="admin__panel" hidden>
-          <details class="new-socio" id="newSocio">
+        <div role="tabpanel" id="apanel-socios" aria-labelledby="atab-socios" class="admin__panel" v-show="mostrador.filtro.tab === 'socios'">
+          <details class="new-socio" :open="nuevoSocioAbierto" @toggle="nuevoSocioAbierto = $event.target.open">
             <summary>＋ Registrar nuevo socio</summary>
-            <form id="socioForm">
+            <form @submit.prevent="registrarSocio">
               <label class="field">Nombre completo
                 <input name="nombre" required minlength="3" maxlength="80" autocomplete="name"
                        pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]{3,80}" placeholder="Ej.: Andrea Torrez"
@@ -292,100 +439,131 @@
               <button class="btn" type="submit">Registrar socio</button>
             </form>
           </details>
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Socio</th><th>Rol</th><th>Alquileres</th><th>En préstamo</th><th>Vencidos</th><th>Multas pendientes</th><th>Total gastado</th><th><span class="sr-only">Acción</span></th></tr></thead>
-            <tbody id="adminSocios"></tbody>
-          </table>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Socio</th><th>Rol</th><th>Alquileres</th><th>En préstamo</th><th>Vencidos</th><th>Multas pendientes</th><th>Total gastado</th><th><span class="sr-only">Acción</span></th></tr></thead>
+              <tbody>
+                <tr v-for="x in mostrador.resumenSocios.value" :key="x.s.socio_id" :class="{ 'row--late': x.vencidos }">
+                  <td><div class="admin-who"><strong>{{ x.s.nombre }}</strong><small>{{ x.s.email }}</small></div></td>
+                  <td><span class="badge">{{ x.s.rol === 'admin' ? 'Admin' : 'Socio' }}</span></td>
+                  <td>{{ x.total }}</td>
+                  <td>{{ x.activos }}</td>
+                  <td><span v-if="x.vencidos" class="badge badge--late">{{ x.vencidos }}</span><template v-else>0</template></td>
+                  <td><strong v-if="x.multas" class="text-alert">{{ bs(x.multas) }}</strong><template v-else>—</template></td>
+                  <td>{{ bs(x.gastado) }}</td>
+                  <td><button class="btn btn--ghost btn--sm" type="button" @click="mostrador.verAlquileresDe(x.s.email)">Ver alquileres</button></td>
+                </tr>
+                <tr v-if="!mostrador.resumenSocios.value.length"><td colspan="8" class="empty">Ningún socio coincide con la búsqueda.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
-    </section>
-  </main>
+    </main>
 
-  <footer class="site-footer">
-    <p><strong>Club Sakila</strong> · Videoclub de discos</p>
-    <p>Alquiler de 1 a 14 días · Multa por retraso: Bs 2.00 por día</p>
-  </footer>
+    <footer class="site-footer">
+      <p><strong>Club Sakila</strong> · Videoclub de discos</p>
+      <p>Alquiler de 1 a 14 días · Multa por retraso: Bs 2.00 por día</p>
+    </footer>
 
-  <dialog id="detailDlg" aria-labelledby="dTitle">
-    <form method="dialog"><button class="icon-btn dlg-close" aria-label="Cerrar ficha">✕</button></form>
-    <div class="detail">
-      <div class="detail__disc">
-        <button type="button" class="flip-disc" id="dDisc" aria-label="Voltear el disco">
-          <span class="flip-disc__inner">
-            <span class="flip-disc__face flip-disc__face--front" id="dDiscFront"></span>
-            <span class="flip-disc__face flip-disc__face--back" id="dDiscBack"></span>
-          </span>
-        </button>
-        <p class="muted text-center detail__hint">Haz clic en el disco para ver el reverso</p>
-        <div class="cover-admin" id="coverAdmin" hidden>
-          <p class="eyebrow">Portada del disco · administrador</p>
-          <div class="cover-admin__actions">
-            <label class="btn btn--sm cover-admin__upload">Subir imagen
-              <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp" class="sr-only">
-            </label>
-            <button type="button" class="btn btn--ghost btn--sm" id="coverReset">Restablecer</button>
+    <!-- Ficha de la película (RF-02) -->
+    <dialog ref="detalleDlg" aria-labelledby="dTitle" @click="cerrarAlFondo" @close="detalleAbierto = false">
+      <form method="dialog"><button class="icon-btn dlg-close" aria-label="Cerrar ficha">✕</button></form>
+      <div class="detail" v-if="detalle">
+        <div class="detail__disc">
+          <button type="button" class="flip-disc" :class="{ 'is-flipped': volteado }" aria-label="Voltear el disco" @click="volteado = !volteado">
+            <span class="flip-disc__inner">
+              <span class="flip-disc__face flip-disc__face--front"><cd-disco :peli="detalle" :lazy="false"></cd-disco></span>
+              <span class="flip-disc__face flip-disc__face--back"><cd-disco :reverso="true"></cd-disco></span>
+            </span>
+          </button>
+          <p class="muted text-center detail__hint">Haz clic en el disco para ver el reverso</p>
+          <div v-if="esAdmin" class="cover-admin" :class="{ 'is-busy': subiendo, 'is-disabled': modo === 'demo' }">
+            <p class="eyebrow">Portada del disco · administrador</p>
+            <div class="cover-admin__actions">
+              <label class="btn btn--sm cover-admin__upload">Subir imagen
+                <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" :disabled="modo === 'demo'" @change="subirPortada">
+              </label>
+              <button type="button" class="btn btn--ghost btn--sm" :disabled="modo === 'demo'" @click="quitarPortada">Restablecer</button>
+            </div>
+            <p class="muted cover-admin__note">{{ modo === 'demo' ? 'Subir portadas necesita el servidor: ejecuta npm start.' : 'JPG, PNG o WebP de hasta 3 MB. “Restablecer” borra la imagen subida y vuelve a buscar el póster en internet (TMDB o Wikipedia).' }}</p>
           </div>
-          <p class="muted cover-admin__note" id="coverNote">JPG, PNG o WebP de hasta 3 MB. “Restablecer” borra la imagen subida y vuelve a buscar el póster en internet (TMDB o Wikipedia).</p>
+        </div>
+        <div class="detail__info">
+          <p class="eyebrow">{{ detalle.categoria }} · {{ detalle.anio }} · {{ detalle.duracion }} min</p>
+          <h2 id="dTitle">{{ detalle.titulo }}</h2>
+          <p class="detail__syn">{{ detalle.sinopsis }}</p>
+          <dl class="specs">
+            <div><dt>Dirección</dt><dd>{{ detalle.director || '—' }}</dd></div>
+            <div><dt>Año</dt><dd>{{ detalle.anio }}</dd></div>
+            <div><dt>Duración</dt><dd>{{ detalle.duracion }} min</dd></div>
+            <div><dt>Clasificación</dt><dd>{{ detalle.clasificacion }}</dd></div>
+            <div><dt>Tarifa</dt><dd>{{ bs(detalle.tarifa_dia) }} por día</dd></div>
+            <div><dt>Multa por atraso</dt><dd>Bs 2.00 por día</dd></div>
+            <div class="specs__wide"><dt>Reparto</dt><dd>{{ detalle.reparto || 'Sin reparto registrado' }}</dd></div>
+          </dl>
+          <div class="trailer">
+            <iframe v-if="detalleAbierto && embed(detalle.trailer_url)" :src="embed(detalle.trailer_url)" :title="'Tráiler de ' + detalle.titulo" loading="lazy"
+                    allow="encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+            <p v-else-if="!detalle.trailer_url" class="muted">Esta película aún no tiene tráiler.</p>
+          </div>
+          <div class="detail__buy">
+            <label class="field">Días de préstamo (1 a 14)
+              <input type="number" v-model.number="detalleDias" min="1" max="14" inputmode="numeric" @change="detalleDias = Math.max(1, Math.min(14, Math.trunc(detalleDias) || 1))">
+            </label>
+            <div class="detail__subtotal"><span class="eyebrow">Subtotal</span><strong>{{ bs(subtotal) }}</strong></div>
+            <button class="btn" type="button" @click="agregarDesdeDetalle">{{ enCarritoDetalle ? 'Actualizar carrito' : 'Añadir al carrito' }}</button>
+            <button class="btn btn--ghost" type="button" :aria-pressed="isFav(detalle.pelicula_id)" @click="toggleFav(detalle.pelicula_id)">{{ isFav(detalle.pelicula_id) ? '♥ En favoritos' : '♡ Favorito' }}</button>
+          </div>
         </div>
       </div>
-      <div class="detail__info">
-        <p class="eyebrow" id="dMeta"></p>
-        <h2 id="dTitle"></h2>
-        <p id="dSyn" class="detail__syn"></p>
-        <dl class="specs">
-          <div><dt>Dirección</dt><dd id="dDir"></dd></div>
-          <div><dt>Año</dt><dd id="dYear"></dd></div>
-          <div><dt>Duración</dt><dd id="dDur"></dd></div>
-          <div><dt>Clasificación</dt><dd id="dCla"></dd></div>
-          <div><dt>Tarifa</dt><dd id="dTar"></dd></div>
-          <div><dt>Multa por atraso</dt><dd>Bs 2.00 por día</dd></div>
-          <div class="specs__wide"><dt>Reparto</dt><dd id="dCast"></dd></div>
-        </dl>
-        <div class="trailer" id="dTrailer"></div>
-        <div class="detail__buy">
-          <label class="field">Días de préstamo (1 a 14)
-            <input type="number" id="dDias" min="1" max="14" value="3" inputmode="numeric">
-          </label>
-          <div class="detail__subtotal"><span class="eyebrow">Subtotal</span><strong id="dSubtotal">Bs 0.00</strong></div>
-          <button class="btn" id="dAdd" type="button">Añadir al carrito</button>
-          <button class="btn btn--ghost" id="dFav" type="button" aria-pressed="false">♡ Favorito</button>
-        </div>
-      </div>
-    </div>
-  </dialog>
+    </dialog>
 
-  <dialog id="trailerDlg" class="trailer-dlg" aria-labelledby="tTitle">
-    <div class="trailer-dlg__bar">
-      <div>
-        <p class="eyebrow" id="tSub"></p>
-        <h3 id="tTitle"></h3>
-      </div>
-      <form method="dialog"><button class="pill-btn">Cerrar ✕</button></form>
-    </div>
-    <div class="trailer-dlg__stage" id="tStage"></div>
-  </dialog>
-
-  <dialog id="cartDlg" aria-labelledby="cartTitle">
-    <div class="cart">
-      <header class="cart__head">
+    <!-- Tráiler a pantalla completa -->
+    <dialog ref="trailerDlg" class="trailer-dlg" aria-labelledby="tTitle" @click="cerrarAlFondo" @close="trailer = null">
+      <div class="trailer-dlg__bar">
         <div>
-          <p class="eyebrow">Reserva y préstamo</p>
-          <h2 id="cartTitle">Tu carrito</h2>
+          <p class="eyebrow">{{ trailer ? 'Dirigida por ' + trailer.director + ' · ' + trailer.anio : '' }}</p>
+          <h3 id="tTitle">{{ trailer ? trailer.titulo : 'Tráiler' }}</h3>
         </div>
-        <form method="dialog"><button class="icon-btn" aria-label="Cerrar carrito">✕</button></form>
-      </header>
-      <ul id="cartList" class="cart__list"></ul>
-      <p class="cart__total">Total <strong id="cartTotal">Bs 0.00</strong></p>
-      <p class="muted" id="cartSocio"></p>
-      <div class="cart__actions">
-        <button class="btn btn--ghost" id="cartClear" type="button">Vaciar carrito</button>
-        <button class="btn" id="cartPay" type="button">Confirmar alquiler</button>
+        <form method="dialog"><button class="pill-btn">Cerrar ✕</button></form>
       </div>
-    </div>
-  </dialog>
+      <div class="trailer-dlg__stage">
+        <iframe v-if="trailer" :src="embed(trailer.trailer_url, true)" :title="'Tráiler de ' + trailer.titulo"
+                allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+    </dialog>
 
+    <!-- Carrito (RF-03) -->
+    <dialog ref="cartDlg" aria-labelledby="cartTitle" @click="cerrarAlFondo">
+      <div class="cart">
+        <header class="cart__head">
+          <div>
+            <p class="eyebrow">Reserva y préstamo</p>
+            <h2 id="cartTitle">Tu carrito</h2>
+          </div>
+          <form method="dialog"><button class="icon-btn" aria-label="Cerrar carrito">✕</button></form>
+        </header>
+        <ul class="cart__list">
+          <li v-for="{ i, p } in cartFilas" :key="p.pelicula_id" class="cart-item">
+            <span class="cart-item__disc"><cd-disco :peli="p"></cd-disco></span>
+            <div><strong>{{ p.titulo }}</strong><small>{{ bs(p.tarifa_dia) }} por día</small></div>
+            <label class="field">Días <input type="number" min="1" max="14" :value="i.dias" inputmode="numeric" @change="cambiarDias(i, $event.target.value); $event.target.value = i.dias"></label>
+            <span class="cart-item__sub">{{ bs(p.tarifa_dia * i.dias) }}</span>
+            <button class="icon-btn" type="button" :aria-label="'Quitar ' + p.titulo" @click="quitarDelCarrito(p.pelicula_id)">✕</button>
+          </li>
+          <li v-if="!cartFilas.length" class="empty">Tu carrito está vacío. Elige un disco de la tira o del catálogo.</li>
+        </ul>
+        <p class="cart__total">Total <strong>{{ bs(cartTotal) }}</strong></p>
+        <p class="muted">Se registrará a nombre de {{ user.nombre }} ({{ user.email }}).</p>
+        <div class="cart__actions">
+          <button class="btn btn--ghost" type="button" :disabled="!cartFilas.length" @click="vaciarCarrito">Vaciar carrito</button>
+          <button class="btn" type="button" :disabled="!cartFilas.length || pagando" @click="confirmarAlquiler">Confirmar alquiler</button>
+        </div>
+      </div>
+    </dialog>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div class="toast" :class="{ show: toastVisible }" role="status" aria-live="polite">{{ toastMsg }}</div>
+  </div>
 </body>
 </html>

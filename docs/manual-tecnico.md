@@ -2,7 +2,7 @@
 
 Catálogo de películas presentado como discos: acceso con inicio de sesión, tira 3D interactiva, discos con la portada de cada película, catálogo con lector de discos, ficha con tráiler, carrito de alquiler y cuenta de socio con historial, multas y favoritos. El administrador tiene su propia vista: el mostrador del club, con los préstamos activos y el tiempo que queda para devolver cada disco.
 
-HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones 3D) · JavaScript ES6+ (módulos, Fetch API) · API REST en Node.js · SQLite.
+HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones 3D) · JavaScript ES6+ (módulos, Fetch API) · **Vue 3** (Composition API, componentes, directivas) · API REST en Node.js · SQLite.
 
 ## Requisitos
 Node.js **22.13 o superior** (`node -v`). No hay dependencias: no hace falta `npm install`.
@@ -109,7 +109,9 @@ Abrir `index.html` con doble clic (`file://`) no funciona: los navegadores bloqu
 ```
 index.html, login.html
 css/       variables, base, layout, components, auth, styles (@import)
-js/        main.js (interfaz y arranque según el rol), admin.js (mostrador del administrador), login.js (acceso),
+js/        main.js (app raíz de Vue 3: estado reactivo y arranque según el rol),
+           componentes.js (componentes Vue: <cd-disco>, <tira-discos>, <cuenta-regresiva>, <tarjeta-stat>),
+           admin.js (composable useMostrador del administrador), login.js (acceso),
            disc-strip.js (tira 3D), disc.js (disco y utilidades), api.js (cliente Fetch + modo demostración),
            demo-data.js (generado)
 server/    server.js (API + archivos estáticos), auth.js (contraseñas y sesiones),

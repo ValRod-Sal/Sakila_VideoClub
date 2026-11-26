@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## 4.1.0 — Vue 3
+
+- La interfaz principal pasa a ser una app de Vue 3 (Composition API) sin paso de compilación.
+- `index.html` es la plantilla: directivas `v-for`, `v-if`, `v-model`, `@click` en lugar de `innerHTML`.
+- Componentes `<cd-disco>`, `<tira-discos>`, `<cuenta-regresiva>` y `<tarjeta-stat>`; composable `useMostrador`.
+- La búsqueda del mostrador también reconoce correos en la pestaña Discos.
+
 ## 4.0.0 — Funcionalidades
 
 - Catálogo de discos y navegación 3D, fichas y tráileres.
