@@ -180,11 +180,56 @@ docs/      historias-de-usuario.md
 assets/    icons/disc.svg
 ```
 
-## Datos
-Catálogo de 15 películas: 14 de A24 y *Toy Story 4* (clasificación G), con dirección, reparto, duración, clasificación y enlace de tráiler de YouTube). Cada disco muestra la portada de la película (Wikipedia, TMDB o subida por el administrador); si no hay, se dibuja con CSS a partir de dos colores (`color1`, `color2`). Para cambiar el catálogo edita `database/seed.sql` y ejecuta `npm run db:reset` y `npm run demo:build`.
+## Catálogo cinematográfico
+
+Club Sakila cuenta con un catálogo de 15 películas, integrado por 14 producciones de A24 y *Toy Story 4* (clasificación G).
+
+Cada película dispone de información cinematográfica detallada:
+
+- Dirección y reparto.
+- Año de estreno y duración.
+- Categoría y clasificación.
+- Tarifa de alquiler.
+- Sinopsis y tráiler.
+
+Las portadas se obtienen mediante Wikipedia, TMDB o la carga personalizada desde el panel administrativo. En ausencia de una portada, el sistema genera una representación visual mediante CSS utilizando los atributos `color1` y `color2`.
+
+Los datos del catálogo se encuentran definidos en `database/seed.sql`.
+
+### Actualización del catálogo
+
+```bash
+npm run db:reset
+npm run demo:build
+```
+
+> **Nota técnica:** `npm run db:reset` reinicia la base de datos y elimina los registros existentes.
 
 ## Despliegue
-GitHub Pages solo sirve archivos estáticos: ahí la página funcionará en modo demostración. Para usar la base de datos real usa **Render**: crea un *Web Service* desde el repositorio (el archivo `render.yaml` ya trae la configuración). Las portadas funcionan sin configurar nada (Wikipedia); si quieres usar TMDB primero, agrega `TMDB_TOKEN` en *Environment*. En el plan gratuito el disco es temporal: la base, las portadas subidas y la caché vuelven a empezar cuando el servicio se reinicia.
+
+Club Sakila dispone de dos modalidades de funcionamiento:
+
+| Característica | GitHub Pages | Render |
+| :--- | :--- | :--- |
+| Modalidad | Demostración | Servidor |
+| Arquitectura | Frontend estático | Full Stack |
+| Persistencia | localStorage | SQLite |
+| Backend | No requerido | Node.js |
+| Configuración | GitHub Pages | `render.yaml` |
+
+### GitHub Pages
+
+Versión de demostración accesible desde el navegador, con almacenamiento local de cuentas y operaciones.
+
+**[Acceder a Club Sakila](https://valrod-sal.github.io/Sakila_VideoClub/)**
+
+### Render
+
+Modalidad de servidor con API REST y base de datos SQLite. La configuración del servicio se encuentra definida en `render.yaml`.
+
+La integración con Wikipedia no requiere credenciales adicionales. La integración opcional con TMDB utiliza la variable de entorno `TMDB_TOKEN`.
+
+En el plan gratuito de Render, el almacenamiento es temporal. La base de datos, las portadas personalizadas y la caché pueden perderse al reiniciar el servicio.
 
 ## 05 — Proyecto académico
 
