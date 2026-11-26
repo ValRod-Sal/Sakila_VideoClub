@@ -30,7 +30,7 @@ Club Sakila transforma el catálogo de películas en una colección de discos na
 | Diagramas del sistema | [FigJam](https://www.figma.com/board/AVngDk96KW1SPjGUluepOr/Club-Sakila-%C2%B7-Diagramas-del-sistema--SIS-214-?node-id=0-1&p=f&t=d0RmfCtdCgZE5Hmo-0) |
 | Historias de usuario | [Plantilla A](docs/historias-de-usuario.md) |
 | Arquitectura | [Descripción técnica](docs/arquitectura.md) |
-| Requisitos y pruebas | [Matriz de validación](docs/validacion.md) |
+| Requisitos funcionales | [Trazabilidad del sistema](docs/validacion.md) |
 | API, configuración y seguridad | [Manual técnico](docs/manual-tecnico.md) |
 
 <details><summary>Ver Design System y prototipos de escritorio</summary>
@@ -50,7 +50,7 @@ flowchart TD
  A --> S[(SQLite)]
 ```
 
-El modo demostración guarda los cambios únicamente en el navegador; no equivale a un servicio de autenticación seguro. El modo servidor utiliza API REST y SQLite. El catálogo actual contiene 15 películas seleccionadas, no la totalidad del catálogo original Sakila.
+El modo demostración guarda los cambios únicamente en el navegador; no equivale a un servicio de autenticación seguro. El modo servidor utiliza API REST y SQLite. El catálogo contiene 15 películas seleccionadas.
 
 ## 04 — Guía completa del proyecto
 
@@ -63,7 +63,7 @@ HTML5 semántico · CSS3 modular (Grid/Flex, Custom Properties, transformaciones
 ### Requisitos
 Node.js **22.13 o superior** (`node -v`). No hay dependencias: no hace falta `npm install`.
 
-Si tienes una base de datos de una versión anterior, el README original indica ejecutar `npm run db:reset` una vez (la nueva versión agrega contraseñas y sesiones). **Atención:** este comando sustituye los datos existentes por los de ejemplo; respalda los datos que quieras conservar antes de ejecutarlo.
+Si tienes una base de datos de una versión anterior, ejecuta `npm run db:reset` una vez (la nueva versión agrega contraseñas y sesiones). **Atención:** este comando sustituye los datos existentes por los de ejemplo; respalda los datos que quieras conservar antes de ejecutarlo.
 
 ### Cómo correrlo (VS Code)
 1. File → Open Folder → esta carpeta.
@@ -103,7 +103,7 @@ La consola indica qué fuentes están activas, por ejemplo “Portadas de los di
 El administrador también puede **subir su propia imagen** (JPG, PNG o WebP, hasta 3 MB) desde la ficha de la película. Se guarda en `database/portadas/` y tiene prioridad sobre las fuentes de internet. “Restablecer” la quita y vuelve a buscar el póster.
 
 ### Tráileres
-Cada película tiene su tráiler oficial de YouTube (según el README original, verificados en noviembre de 2026; su disponibilidad puede cambiar). Si tu base de datos se creó antes de esta corrección, al iniciar el servidor se aplica sola la migración `database/migraciones/001-trailers.sql`; no se pierden alquileres ni socios.
+Cada película tiene su tráiler oficial de YouTube (su disponibilidad depende de YouTube). Si tu base de datos se creó antes de esta corrección, al iniciar el servidor se aplica sola la migración `database/migraciones/001-trailers.sql`; no se pierden alquileres ni socios.
 
 | Comando | Qué hace |
 |---|---|
@@ -191,4 +191,4 @@ Tecnologías Web I · SIS-214 · Universidad Católica Boliviana · 2026-02.
 
 [Historial de contribuciones](https://github.com/ValRod-Sal/Sakila_VideoClub/graphs/contributors) · [Cambios de versión](CHANGELOG.md) · [Guía de contribución](CONTRIBUTING.md)
 
-El proyecto utiliza recursos cinematográficos de terceros y servicios externos de portadas y tráileres; sus derechos corresponden a sus respectivos titulares. El equipo utilizó asistencia de IA durante el desarrollo; la revisión y validación de la entrega corresponden al equipo.
+El proyecto utiliza recursos cinematográficos de terceros y servicios externos de portadas y tráileres; sus derechos corresponden a sus respectivos titulares. El desarrollo contó con asistencia de IA.

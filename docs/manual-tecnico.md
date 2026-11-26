@@ -1,4 +1,4 @@
-# Club Sakila: videoclub de discos
+# Manual técnico — Club Sakila
 
 Catálogo de películas presentado como discos: acceso con inicio de sesión, tira 3D interactiva, discos con la portada de cada película, catálogo con lector de discos, ficha con tráiler, carrito de alquiler y cuenta de socio con historial, multas y favoritos. El administrador tiene su propia vista: el mostrador del club, con los préstamos activos y el tiempo que queda para devolver cada disco.
 
@@ -47,7 +47,7 @@ La consola indica qué fuentes están activas, por ejemplo “Portadas de los di
 El administrador también puede **subir su propia imagen** (JPG, PNG o WebP, hasta 3 MB) desde la ficha de la película. Se guarda en `database/portadas/` y tiene prioridad sobre las fuentes de internet. “Restablecer” la quita y vuelve a buscar el póster.
 
 ### Tráileres
-Cada película tiene su tráiler oficial de YouTube (verificados en noviembre de 2026). Si tu base de datos se creó antes de esta corrección, al iniciar el servidor se aplica sola la migración `database/migraciones/001-trailers.sql`; no se pierden alquileres ni socios.
+Cada película tiene su tráiler oficial de YouTube (sujetos a disponibilidad en YouTube). Si tu base de datos se creó antes de esta corrección, al iniciar el servidor se aplica sola la migración `database/migraciones/001-trailers.sql`; no se pierden alquileres ni socios.
 
 | Comando | Qué hace |
 |---|---|
