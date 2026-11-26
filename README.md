@@ -3,7 +3,7 @@
 <p align="center"><strong>Elige, alquila y devuelve a tiempo.</strong></p>
 <p align="center">Una experiencia editorial de cine, con un catálogo de discos interactivo y gestión integral de alquileres.</p>
 <p align="center">
-<a href="https://valrod-sal.github.io/Sakila_VideoClub/">Explorar demo</a> · <a href="#requisitos-e-instalación">Instalación</a> · <a href="#02--diseño-y-documentación">Figma y documentación</a> · <a href="https://drive.google.com/file/d/1JKAcSp1quXbUUPHQAAAgAJwDkajcgPb5/view">Perfil del proyecto (PDF)</a> · <a href="#api-rest">API REST</a>
+<a href="https://valrod-sal.github.io/Sakila_VideoClub/">Explorar demo</a> · <a href="#requisitos-e-instalación">Instalación</a> · <a href="#02--diseño-y-documentación">Figma y documentación</a> · <a href="https://drive.google.com/file/d/1DK73Cr-yy5xd6g_4E9qI3BqyN5LvRe8B/view?usp=sharing">Perfil del proyecto (PDF)</a> · <a href="#api-rest">API REST</a>
 </p>
 <p align="center">
 <img alt="Versión 4.0.0" src="https://img.shields.io/badge/versión-4.0.0-891A20?style=flat-square"> <img alt="JavaScript ES6+" src="https://img.shields.io/badge/JavaScript-ES6%2B-D4AF37?style=flat-square"> <img alt="Node.js 22.13+" src="https://img.shields.io/badge/Node.js-22.13%2B-303D35?style=flat-square"> <img alt="SQLite" src="https://img.shields.io/badge/SQLite-database-243B50?style=flat-square">
@@ -26,7 +26,7 @@ Club Sakila transforma el catálogo de películas en una colección de discos na
 
 | Recurso | Enlace |
 | --- | --- |
-| Perfil del proyecto | [Consultar documento PDF](https://drive.google.com/file/d/1JKAcSp1quXbUUPHQAAAgAJwDkajcgPb5/view) |
+| Perfil del proyecto | [Consultar documento PDF](https://drive.google.com/file/d/1DK73Cr-yy5xd6g_4E9qI3BqyN5LvRe8B/view?usp=sharing) |
 | Design System, Lo-Fi y Hi-Fi | [Prototipo Figma](https://www.figma.com/design/PjMkotdkaep8e3Bfvl0PXL/Club-Sakila-%C2%B7-Prototipo--Design-System--Lo-Fi--Hi-Fi-?node-id=2-4&p=f&t=3c6psznN6vKsk45i-0) |
 | Diagramas del sistema | [FigJam](https://www.figma.com/board/AVngDk96KW1SPjGUluepOr/Club-Sakila-%C2%B7-Diagramas-del-sistema--SIS-214-?node-id=0-1&p=f&t=d0RmfCtdCgZE5Hmo-0) |
 | Historias de usuario | [Plantilla A](docs/historias-de-usuario.md) |
