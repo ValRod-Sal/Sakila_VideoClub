@@ -3,7 +3,7 @@
 <p align="center"><strong>Elige, alquila y devuelve a tiempo.</strong></p>
 <p align="center">Una experiencia editorial de cine, con un catálogo de discos interactivo y gestión integral de alquileres.</p>
 <p align="center">
-<a href="https://valrod-sal.github.io/Sakila_VideoClub/">Explorar demo</a> · <a href="#requisitos-e-instalación">Instalación</a> · <a href="#diseño-y-documentación">Figma y documentación</a> · <a href="https://drive.google.com/file/d/1JKAcSp1quXbUUPHQAAAgAJwDkajcgPb5/view">Perfil del proyecto (PDF)</a> · <a href="#api-rest">API REST</a>
+<a href="https://valrod-sal.github.io/Sakila_VideoClub/">Explorar demo</a> · <a href="#requisitos-e-instalación">Instalación</a> · <a href="#02--diseño-y-documentación">Figma y documentación</a> · <a href="https://drive.google.com/file/d/1JKAcSp1quXbUUPHQAAAgAJwDkajcgPb5/view">Perfil del proyecto (PDF)</a> · <a href="#api-rest">API REST</a>
 </p>
 <p align="center">
 <img alt="Versión 4.0.0" src="https://img.shields.io/badge/versión-4.0.0-891A20?style=flat-square"> <img alt="JavaScript ES6+" src="https://img.shields.io/badge/JavaScript-ES6%2B-D4AF37?style=flat-square"> <img alt="Node.js 22.13+" src="https://img.shields.io/badge/Node.js-22.13%2B-303D35?style=flat-square"> <img alt="SQLite" src="https://img.shields.io/badge/SQLite-database-243B50?style=flat-square">
